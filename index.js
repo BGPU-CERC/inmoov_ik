@@ -95,6 +95,10 @@ async function createScene(modelPath) {
     if (n.isBone && n.name.match(/target_l/i)) {
       refs.target_l = n;
     }
+
+    if (n.isBone && n.name.match(/head/i)) {
+      refs.head = n;
+    }
   });
 
   return { scene, refs };
@@ -134,8 +138,15 @@ function createRenderer() {
   return renderer;
 }
 
+const v0 = new THREE.Vector3();
+function updateIk() {
+  refs.target_l.getWorldPosition(v0);
+  refs.head.lookAt(v0);
+  ikSolver.update();
+}
+
 function animate() {
   cameraControls.update();
-  ikSolver.update();
+  updateIk();
   renderer.render(scene, camera);
 }
