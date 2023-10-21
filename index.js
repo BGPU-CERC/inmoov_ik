@@ -7,89 +7,120 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xcccccc);
-scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
+const renderer = createRenderer();
+const { scene, refs } = await createScene("inmoov.glb");
+const { camera, cameraControls } = createCamera(renderer);
+const { ikHelper, ikSolver } = createIKSolver(refs.inmoov);
 
-const loader = new GLTFLoader();
-const gltf = await loader.loadAsync("inmoov.glb");
-scene.add(gltf.scene);
-
-const refs = {};
-
-gltf.scene.traverse((n) => {
-  if (n.isSkinnedMesh && n.name.match(/shoulder_l/i)) {
-    refs.mesh = n;
-  }
-
-  if (n.isBone && n.name.match(/target_l/i)) {
-    refs.target = n;
-  }
+[refs.target_l].forEach((target) => {
+  const controls = createTargetControls(target, cameraControls);
+  scene.add(controls);
 });
 
-const indexOfLink = (regex) =>
-  refs.mesh.skeleton.bones.findIndex((bone) => bone.name.match(regex));
-
-const iks = [
-  {
-    target: indexOfLink(/target_l/i),
-    effector: indexOfLink(/hand_l/i),
-    links: [
-      {
-        index: indexOfLink(/forearm_l/i),
-        rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
-        rotationMax: new THREE.Vector3(0, 0, 0),
-      },
-      {
-        index: indexOfLink(/shoulder_l/i),
-        rotationMin: new THREE.Vector3(0, 0, -Math.PI),
-        rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
-      },
-    ],
-  },
-];
-
-const ikSolver = new CCDIKSolver(refs.mesh, iks);
-const ikHelper = new CCDIKHelper(refs.mesh, iks, 0.01);
 scene.add(ikHelper);
-
-const camera = new THREE.OrthographicCamera();
-camera.position.set(0, 0, 10);
-camera.zoom = 0.5;
-camera.updateProjectionMatrix();
-
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
+renderer.setAnimationLoop(animate);
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.update();
+function createIKSolver(mesh) {
+  const indexOfLink = (regex) =>
+    mesh.skeleton.bones.findIndex((bone) => bone.name.match(regex));
 
-const transformControls = new TransformControls(camera, renderer.domElement);
-transformControls.size = 0.75;
-transformControls.showX = true;
-transformControls.showY = true;
-transformControls.showZ = true;
-transformControls.space = "world";
-transformControls.attach(refs.target);
-scene.add(transformControls);
+  const iks = [
+    {
+      target: indexOfLink(/target_l/i),
+      effector: indexOfLink(/hand_l/i),
+      links: [
+        {
+          index: indexOfLink(/forearm_l/i),
+          rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
+          rotationMax: new THREE.Vector3(0, 0, 0),
+        },
+        {
+          index: indexOfLink(/shoulder_l/i),
+          rotationMin: new THREE.Vector3(0, 0, -Math.PI),
+          rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
+        },
+      ],
+    },
+  ];
 
-// disable orbitControls while using transformControls
-const setControls = (state) => (controls.enabled = state);
-transformControls.addEventListener("mouseDown", () => setControls(false));
-transformControls.addEventListener("mouseUp", () => setControls(true));
+  const ikSolver = new CCDIKSolver(mesh, iks);
+  const ikHelper = new CCDIKHelper(mesh, iks, 0.01);
 
-const light = new THREE.AmbientLight(0xffffff, 5);
-scene.add(light);
+  return { ikHelper, ikSolver };
+}
 
-const size = 20;
-const divisions = 10;
-const gridHelper = new THREE.GridHelper(size, divisions);
-scene.add(gridHelper);
+async function createScene(modelPath) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xcccccc);
+  scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
+
+  const loader = new GLTFLoader();
+  const model = await loader.loadAsync(modelPath);
+  scene.add(model.scene);
+
+  const color = 0xffffff;
+  const intensity = 3;
+  const light = new THREE.DirectionalLight(color, intensity);
+  light.position.set(-1, 2, 4);
+  scene.add(light);
+
+  const size = 20;
+  const divisions = 10;
+  const gridHelper = new THREE.GridHelper(size, divisions);
+  scene.add(gridHelper);
+
+  const refs = {};
+
+  scene.traverse((n) => {
+    if (n.isSkinnedMesh && n.name.match(/shoulder_l/i)) {
+      refs.inmoov = n;
+    }
+
+    if (n.isBone && n.name.match(/target_l/i)) {
+      refs.target_l = n;
+    }
+  });
+
+  return { scene, refs };
+}
+
+function createCamera(renderer) {
+  const camera = new THREE.OrthographicCamera();
+  camera.position.set(0, 0, 10);
+  camera.zoom = 0.5;
+  camera.updateProjectionMatrix();
+
+  const cameraControls = new OrbitControls(camera, renderer.domElement);
+  cameraControls.update();
+
+  return { camera, cameraControls };
+}
+
+function createTargetControls(target, cameraControls) {
+  const targetControls = new TransformControls(camera, renderer.domElement);
+  targetControls.size = 0.75;
+  targetControls.showX = true;
+  targetControls.showY = true;
+  targetControls.showZ = true;
+  targetControls.space = "world";
+  targetControls.attach(target);
+
+  const setCamEnabled = (state) => (state = cameraControls.enabled = state);
+  targetControls.addEventListener("mouseDown", () => setCamEnabled(false));
+  targetControls.addEventListener("mouseUp", () => setCamEnabled(true));
+
+  return targetControls;
+}
+
+function createRenderer() {
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  return renderer;
+}
 
 function animate() {
-  controls.update();
+  cameraControls.update();
   ikSolver.update();
   renderer.render(scene, camera);
 }
