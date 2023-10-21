@@ -13,7 +13,7 @@ scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
 
 const camera = new THREE.OrthographicCamera();
 camera.position.set(0, 0, 10);
-camera.zoom = 0.05;
+camera.zoom = 0.5;
 camera.updateProjectionMatrix();
 
 const renderer = new THREE.WebGLRenderer();
@@ -81,7 +81,7 @@ const setControls = (state) => (controls.enabled = state);
 transformControls.addEventListener("mouseDown", () => setControls(false));
 transformControls.addEventListener("mouseUp", () => setControls(true));
 
-const light = new THREE.AmbientLight(0x404040);
+const light = new THREE.AmbientLight(0xffffff, 5);
 scene.add(light);
 
 const size = 20;
