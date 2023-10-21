@@ -28,8 +28,13 @@ function createIKSolver(mesh) {
   const iks = [
     {
       target: indexOfLink(/target_l/i),
-      effector: indexOfLink(/hand_l/i),
+      effector: indexOfLink(/hand_effector_l/i),
       links: [
+        {
+          index: indexOfLink(/hand_l/i),
+          rotationMin: new THREE.Vector3(0, 0, 0),
+          rotationMax: new THREE.Vector3(0, Math.PI, 0),
+        },
         {
           index: indexOfLink(/forearm_l/i),
           rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
@@ -39,6 +44,16 @@ function createIKSolver(mesh) {
           index: indexOfLink(/shoulder_l/i),
           rotationMin: new THREE.Vector3(0, 0, -Math.PI),
           rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
+        },
+        {
+          index: indexOfLink(/topstom/i),
+          rotationMin: new THREE.Vector3(0, 0, -Math.PI / 6),
+          rotationMax: new THREE.Vector3(0, 0, Math.PI / 6),
+        },
+        {
+          index: indexOfLink(/midstom/i),
+          rotationMin: new THREE.Vector3(0, -Math.PI / 6, 0),
+          rotationMax: new THREE.Vector3(0, Math.PI / 6, 0),
         },
       ],
     },
