@@ -1,7 +1,10 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { CCDIKSolver } from "three/addons/animation/CCDIKSolver.js";
+import {
+  CCDIKSolver,
+  CCDIKHelper,
+} from "three/addons/animation/CCDIKSolver.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 
 const scene = new THREE.Scene();
@@ -61,7 +64,7 @@ const iks = [
 ];
 
 const ikSolver = new CCDIKSolver(OOI.mesh, iks);
-const ikHelper = ikSolver.createHelper();
+const ikHelper = new CCDIKHelper(OOI.mesh, iks, 0.01);
 scene.add(ikHelper);
 
 const transformControls = new TransformControls(camera, renderer.domElement);
@@ -87,10 +90,10 @@ const gridHelper = new THREE.GridHelper(size, divisions);
 scene.add(gridHelper);
 
 function animate() {
-  requestAnimationFrame(animate);
   controls.update();
   ikSolver.update();
   renderer.render(scene, camera);
+  requestAnimationFrame(animate);
 }
 
 animate();
