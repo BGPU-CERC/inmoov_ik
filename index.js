@@ -11,24 +11,11 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xcccccc);
 scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
 
-const camera = new THREE.OrthographicCamera();
-camera.position.set(0, 0, 10);
-camera.zoom = 0.5;
-camera.updateProjectionMatrix();
-
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setAnimationLoop(animate);
-document.body.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.update();
-
 const loader = new GLTFLoader();
 const gltf = await loader.loadAsync("inmoov.glb");
 scene.add(gltf.scene);
 
-let refs = {};
+const refs = {};
 
 gltf.scene.traverse((n) => {
   if (n.isSkinnedMesh && n.name.match(/shoulder_l/i)) {
@@ -65,6 +52,19 @@ const iks = [
 const ikSolver = new CCDIKSolver(refs.mesh, iks);
 const ikHelper = new CCDIKHelper(refs.mesh, iks, 0.01);
 scene.add(ikHelper);
+
+const camera = new THREE.OrthographicCamera();
+camera.position.set(0, 0, 10);
+camera.zoom = 0.5;
+camera.updateProjectionMatrix();
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setAnimationLoop(animate);
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.update();
 
 const transformControls = new TransformControls(camera, renderer.domElement);
 transformControls.size = 0.75;
