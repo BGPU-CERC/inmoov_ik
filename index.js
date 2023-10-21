@@ -1,11 +1,11 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import {
-  CCDIKSolver,
   CCDIKHelper,
+  CCDIKSolver,
 } from "three/addons/animation/CCDIKSolver.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xcccccc);
@@ -24,47 +24,45 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
 
 const loader = new GLTFLoader();
-const gltf = await loader.loadAsync("test.glb");
+const gltf = await loader.loadAsync("inmoov.glb");
 scene.add(gltf.scene);
 
-let OOI = {};
+let refs = {};
 
 gltf.scene.traverse((n) => {
-  if (n.name === "Cube") {
-    OOI.mesh = n;
+  if (n.isSkinnedMesh && n.name.match(/shoulder_l/i)) {
+    refs.mesh = n;
   }
 
-  if (n.name.endsWith("_target")) {
-    OOI.target = n;
+  if (n.isBone && n.name.match(/target_l/i)) {
+    refs.target = n;
   }
 });
 
+const indexOfLink = (regex) =>
+  refs.mesh.skeleton.bones.findIndex((bone) => bone.name.match(regex));
+
 const iks = [
   {
-    target: 4,
-    effector: 3,
+    target: indexOfLink(/target_l/i),
+    effector: indexOfLink(/hand_l/i),
     links: [
       {
-        index: 2,
-        rotationMin: new THREE.Vector3(0, 0, 0),
-        rotationMax: new THREE.Vector3(0, 0, 1),
+        index: indexOfLink(/forearm_l/i),
+        rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
+        rotationMax: new THREE.Vector3(0, 0, 0),
       },
       {
-        index: 1,
-        rotationMin: new THREE.Vector3(0, 0, 0),
-        rotationMax: new THREE.Vector3(0, 0, 1),
-      },
-      {
-        index: 0,
-        rotationMin: new THREE.Vector3(0, 0, 0),
-        rotationMax: new THREE.Vector3(0, 0, 1),
+        index: indexOfLink(/shoulder_l/i),
+        rotationMin: new THREE.Vector3(0, 0, -Math.PI),
+        rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
       },
     ],
   },
 ];
 
-const ikSolver = new CCDIKSolver(OOI.mesh, iks);
-const ikHelper = new CCDIKHelper(OOI.mesh, iks, 0.01);
+const ikSolver = new CCDIKSolver(refs.mesh, iks);
+const ikHelper = new CCDIKHelper(refs.mesh, iks, 0.01);
 scene.add(ikHelper);
 
 const transformControls = new TransformControls(camera, renderer.domElement);
@@ -73,7 +71,7 @@ transformControls.showX = true;
 transformControls.showY = true;
 transformControls.showZ = true;
 transformControls.space = "world";
-transformControls.attach(OOI.target);
+transformControls.attach(refs.target);
 scene.add(transformControls);
 
 // disable orbitControls while using transformControls
