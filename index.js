@@ -105,10 +105,9 @@ async function createScene(modelPath) {
 }
 
 function createCamera(renderer) {
-  const camera = new THREE.OrthographicCamera();
-  camera.position.set(0, 0, 10);
-  camera.zoom = 0.5;
-  camera.updateProjectionMatrix();
+  const aspect = window.innerWidth / window.innerHeight;
+  const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+  camera.position.set(1, 1, 2);
 
   const cameraControls = new OrbitControls(camera, renderer.domElement);
   cameraControls.update();
