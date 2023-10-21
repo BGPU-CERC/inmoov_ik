@@ -18,6 +18,7 @@ camera.updateProjectionMatrix();
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -91,7 +92,4 @@ function animate() {
   controls.update();
   ikSolver.update();
   renderer.render(scene, camera);
-  requestAnimationFrame(animate);
 }
-
-animate();
