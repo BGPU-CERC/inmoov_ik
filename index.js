@@ -27,6 +27,11 @@ function createIKSolver(refs) {
     refs.inmoov.skeleton.bones.findIndex((bone) => bone.name.match(regex));
 
   const links = {
+    head: {
+      index: indexOfLink(/head/i),
+      rotationMin: new THREE.Vector3(-0.5, -0.5, -0.5),
+      rotationMax: new THREE.Vector3(0.5, 0.5, 0.5),
+    },
     topstom: {
       index: indexOfLink(/topstom/i),
       rotationMin: new THREE.Vector3(0, 0, -0.3),
@@ -92,10 +97,18 @@ function createIKSolver(refs) {
   const ikHelper = new CCDIKHelper(refs.inmoov, iks, 0.01);
 
   const target = new THREE.Vector3();
+  const vector = new THREE.Vector3();
   function updateIK() {
+    ikSolver.update();
+
     refs.target.getWorldPosition(target);
     refs.head.lookAt(target);
-    ikSolver.update();
+    refs.head.rotation.setFromVector3(
+      vector.setFromEuler(refs.head.rotation).max(links.head.rotationMin)
+    );
+    refs.head.rotation.setFromVector3(
+      vector.setFromEuler(refs.head.rotation).min(links.head.rotationMax)
+    );
   }
 
   return { ikHelper, ikSolver, updateIK };
