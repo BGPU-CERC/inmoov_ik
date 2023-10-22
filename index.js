@@ -10,10 +10,11 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const renderer = createRenderer();
 const { scene, refs } = await createScene("inmoov.glb");
 const { camera, cameraControls } = createCamera(renderer);
-const { ikHelper, ikSolver } = createIKSolver(refs.inmoov);
+const { ikHelper, updateIK } = createIKSolver(refs);
 
-[refs.target_l].forEach((target) => {
+[refs.target_l, refs.target_r].forEach((target) => {
   const controls = createTargetControls(target, cameraControls);
+  controls.addEventListener("mouseDown", () => (refs.target = target));
   scene.add(controls);
 });
 
@@ -21,9 +22,22 @@ scene.add(ikHelper);
 document.body.appendChild(renderer.domElement);
 renderer.setAnimationLoop(animate);
 
-function createIKSolver(mesh) {
+function createIKSolver(refs) {
   const indexOfLink = (regex) =>
-    mesh.skeleton.bones.findIndex((bone) => bone.name.match(regex));
+    refs.inmoov.skeleton.bones.findIndex((bone) => bone.name.match(regex));
+
+  const links = {
+    topstom: {
+      index: indexOfLink(/topstom/i),
+      rotationMin: new THREE.Vector3(0, 0, -0.3),
+      rotationMax: new THREE.Vector3(0, 0, 0.3),
+    },
+    midstom: {
+      index: indexOfLink(/midstom/i),
+      rotationMin: new THREE.Vector3(0, -Math.PI / 6, 0),
+      rotationMax: new THREE.Vector3(0, Math.PI / 6, 0),
+    },
+  };
 
   const iks = [
     {
@@ -45,24 +59,46 @@ function createIKSolver(mesh) {
           rotationMin: new THREE.Vector3(0, 0, -Math.PI),
           rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
         },
+        links.topstom,
+        links.midstom,
+      ],
+    },
+    {
+      target: indexOfLink(/target_r/i),
+      effector: indexOfLink(/hand_effector_r/i),
+      links: [
         {
-          index: indexOfLink(/topstom/i),
-          rotationMin: new THREE.Vector3(0, 0, -Math.PI / 6),
-          rotationMax: new THREE.Vector3(0, 0, Math.PI / 6),
+          index: indexOfLink(/hand_r/i),
+          rotationMin: new THREE.Vector3(0, -Math.PI, 0),
+          rotationMax: new THREE.Vector3(0, 0, 0),
         },
         {
-          index: indexOfLink(/midstom/i),
-          rotationMin: new THREE.Vector3(0, -Math.PI / 6, 0),
-          rotationMax: new THREE.Vector3(0, Math.PI / 6, 0),
+          index: indexOfLink(/forearm_r/i),
+          rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
+          rotationMax: new THREE.Vector3(0, 0, 0),
         },
+        {
+          index: indexOfLink(/shoulder_r/i),
+          rotationMin: new THREE.Vector3(0, -Math.PI / 2, 0),
+          rotationMax: new THREE.Vector3(Math.PI, 0, Math.PI / 2),
+        },
+        links.topstom,
+        links.midstom,
       ],
     },
   ];
 
-  const ikSolver = new CCDIKSolver(mesh, iks);
-  const ikHelper = new CCDIKHelper(mesh, iks, 0.01);
+  const ikSolver = new CCDIKSolver(refs.inmoov, iks);
+  const ikHelper = new CCDIKHelper(refs.inmoov, iks, 0.01);
 
-  return { ikHelper, ikSolver };
+  const target = new THREE.Vector3();
+  function updateIK() {
+    refs.target.getWorldPosition(target);
+    refs.head.lookAt(target);
+    ikSolver.update();
+  }
+
+  return { ikHelper, ikSolver, updateIK };
 }
 
 async function createScene(modelPath) {
@@ -88,18 +124,18 @@ async function createScene(modelPath) {
   const refs = {};
 
   scene.traverse((n) => {
-    if (n.isSkinnedMesh && n.name.match(/shoulder_l/i)) {
+    if (n.isSkinnedMesh && n.name.match(/midstom/i)) {
       refs.inmoov = n;
-    }
-
-    if (n.isBone && n.name.match(/target_l/i)) {
+    } else if (n.isBone && n.name.match(/target_l/i)) {
       refs.target_l = n;
-    }
-
-    if (n.isBone && n.name.match(/head/i)) {
+    } else if (n.isBone && n.name.match(/target_r/i)) {
+      refs.target_r = n;
+    } else if (n.isBone && n.name.match(/head/i)) {
       refs.head = n;
     }
   });
+
+  refs.target = refs.target_l;
 
   return { scene, refs };
 }
@@ -117,7 +153,7 @@ function createCamera(renderer) {
 
 function createTargetControls(target, cameraControls) {
   const targetControls = new TransformControls(camera, renderer.domElement);
-  targetControls.size = 0.75;
+  targetControls.size = 0.5;
   targetControls.showX = true;
   targetControls.showY = true;
   targetControls.showZ = true;
@@ -137,15 +173,8 @@ function createRenderer() {
   return renderer;
 }
 
-const v0 = new THREE.Vector3();
-function updateIk() {
-  refs.target_l.getWorldPosition(v0);
-  refs.head.lookAt(v0);
-  ikSolver.update();
-}
-
 function animate() {
+  updateIK();
   cameraControls.update();
-  updateIk();
   renderer.render(scene, camera);
 }
