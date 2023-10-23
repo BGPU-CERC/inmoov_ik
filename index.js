@@ -97,18 +97,23 @@ function createIKSolver(refs) {
   const ikHelper = new CCDIKHelper(refs.inmoov, iks, 0.01);
 
   const target = new THREE.Vector3();
-  const vector = new THREE.Vector3();
+  const v0 = new THREE.Vector3();
+  const q0 = new THREE.Quaternion();
+  const q1 = new THREE.Quaternion();
   function updateIK() {
     ikSolver.update();
 
+    q0.copy(refs.head.quaternion);
     refs.target.getWorldPosition(target);
     refs.head.lookAt(target);
     refs.head.rotation.setFromVector3(
-      vector.setFromEuler(refs.head.rotation).max(links.head.rotationMin)
+      v0.setFromEuler(refs.head.rotation).max(links.head.rotationMin)
     );
     refs.head.rotation.setFromVector3(
-      vector.setFromEuler(refs.head.rotation).min(links.head.rotationMax)
+      v0.setFromEuler(refs.head.rotation).min(links.head.rotationMax)
     );
+    q1.copy(refs.head.quaternion);
+    refs.head.quaternion.slerpQuaternions(q0, q1, 0.1);
   }
 
   return { ikHelper, ikSolver, updateIK };
