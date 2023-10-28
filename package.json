@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "Inverse Kinematics for Inmoov robot",
   "main": "index.js",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.158.0"
+  }
 }
