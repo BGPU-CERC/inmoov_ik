@@ -7,9 +7,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-export async function init() {
+export async function init(modelPath) {
   const renderer = createRenderer();
-  const { scene, refs } = await createScene("inmoov.glb");
+  const { scene, refs } = await createScene(modelPath);
   const { camera, cameraControls } = createCamera(renderer);
   const { ikHelper, updateIK } = createIKSolver(refs);
   scene.add(ikHelper);
