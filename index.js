@@ -7,7 +7,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-export async function init(modelPath) {
+export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
   const { scene, refs } = await createScene(modelPath);
   const { camera, cameraControls } = createCamera(renderer);
@@ -27,7 +27,17 @@ export async function init(modelPath) {
     renderer.render(scene, camera);
   });
 
-  return { renderer };
+  const sceneContainer = document.querySelector(sceneContainerSelector);
+  sceneContainer.appendChild(renderer.domElement);
+
+  const resizeObserver = new ResizeObserver(([entry]) => {
+    const { width, height } = entry.contentRect;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  });
+
+  resizeObserver.observe(sceneContainer);
 }
 
 function createIKSolver(refs) {
