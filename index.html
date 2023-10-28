@@ -26,6 +26,12 @@
       }
     </script>
 
-    <script type="module" src="index.js"></script>
+    <script type="module">
+      import { init } from "./index.js";
+
+      init().then(({ renderer }) => {
+        document.body.appendChild(renderer.domElement);
+      });
+    </script>
   </body>
 </html>

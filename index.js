@@ -7,20 +7,28 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const renderer = createRenderer();
-const { scene, refs } = await createScene("inmoov.glb");
-const { camera, cameraControls } = createCamera(renderer);
-const { ikHelper, updateIK } = createIKSolver(refs);
+export async function init() {
+  const renderer = createRenderer();
+  const { scene, refs } = await createScene("inmoov.glb");
+  const { camera, cameraControls } = createCamera(renderer);
+  const { ikHelper, updateIK } = createIKSolver(refs);
+  scene.add(ikHelper);
 
-[refs.target_l, refs.target_r].forEach((target) => {
-  const controls = createTargetControls(target, cameraControls);
-  controls.addEventListener("mouseDown", () => (refs.target = target));
-  scene.add(controls);
-});
+  [refs.target_l, refs.target_r].forEach((target) => {
+    const args = [target, renderer, camera, cameraControls];
+    const controls = createTargetControls(...args);
+    controls.addEventListener("mouseDown", () => (refs.target = target));
+    scene.add(controls);
+  });
 
-scene.add(ikHelper);
-document.body.appendChild(renderer.domElement);
-renderer.setAnimationLoop(animate);
+  renderer.setAnimationLoop(function animate() {
+    updateIK();
+    cameraControls.update();
+    renderer.render(scene, camera);
+  });
+
+  return { renderer };
+}
 
 function createIKSolver(refs) {
   const indexOfLink = (regex) =>
@@ -169,7 +177,7 @@ function createCamera(renderer) {
   return { camera, cameraControls };
 }
 
-function createTargetControls(target, cameraControls) {
+function createTargetControls(target, renderer, camera, cameraControls) {
   const targetControls = new TransformControls(camera, renderer.domElement);
   targetControls.size = 0.5;
   targetControls.showX = true;
@@ -189,10 +197,4 @@ function createRenderer() {
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
-}
-
-function animate() {
-  updateIK();
-  cameraControls.update();
-  renderer.render(scene, camera);
 }
