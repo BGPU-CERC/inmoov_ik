@@ -27,9 +27,21 @@
     </script>
 
     <script type="module">
+      import { GUI } from "three/addons/libs/lil-gui.module.min.js";
       import { init } from "./index.js";
 
-      init("body", "inmoov.glb");
+      const scene = await init("body", "inmoov.glb");
+
+      const gui = new GUI();
+      const rotationMap = scene.getRotationMap();
+      Object.keys(rotationMap).forEach((key) => {
+        gui.add(rotationMap, key).listen();
+      });
+
+      setInterval(
+        () => Object.assign(rotationMap, scene.getRotationMap()),
+        1000 / 5
+      );
     </script>
   </body>
 </html>

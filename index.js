@@ -11,7 +11,7 @@ export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
   const { scene, refs } = await createScene(modelPath);
   const { camera, cameraControls } = createCamera(renderer);
-  const { ikHelper, updateIK } = createIKSolver(refs);
+  const { ikHelper, updateIK, getRotationMap } = createIKSolver(refs);
   scene.add(ikHelper);
 
   [refs.target_l, refs.target_r].forEach((target) => {
@@ -38,27 +38,86 @@ export async function init(sceneContainerSelector, modelPath) {
   });
 
   resizeObserver.observe(sceneContainer);
+
+  renderer.setAnimationLoop(function animate() {
+    updateIK();
+    cameraControls.update();
+    renderer.render(scene, camera);
+  });
+
+  return { getRotationMap };
 }
 
 function createIKSolver(refs) {
   const indexOfLink = (regex) =>
     refs.inmoov.skeleton.bones.findIndex((bone) => bone.name.match(regex));
 
+  const rotationMapOf = (part, from = 0, to = 1) => ({ part, from, to });
+
   const links = {
     head: {
       index: indexOfLink(/head/i),
       rotationMin: new THREE.Vector3(-0.5, -0.5, -0.5),
       rotationMax: new THREE.Vector3(0.5, 0.5, 0.5),
+      rotationMap: { x: rotationMapOf("neck"), y: rotationMapOf("rothead") },
     },
     topstom: {
       index: indexOfLink(/topstom/i),
       rotationMin: new THREE.Vector3(0, 0, -0.3),
       rotationMax: new THREE.Vector3(0, 0, 0.3),
+      rotationMap: { z: rotationMapOf("topstom", 1, 0) },
     },
     midstom: {
       index: indexOfLink(/midstom/i),
       rotationMin: new THREE.Vector3(0, -Math.PI / 6, 0),
       rotationMax: new THREE.Vector3(0, Math.PI / 6, 0),
+      rotationMap: { y: rotationMapOf("midstom") },
+    },
+
+    hand_l: {
+      index: indexOfLink(/hand_l/i),
+      rotationMin: new THREE.Vector3(0, 0, 0),
+      rotationMax: new THREE.Vector3(0, Math.PI / 2, 0),
+      rotationMap: { y: rotationMapOf("wrist_l") },
+    },
+    forearm_l: {
+      index: indexOfLink(/forearm_l/i),
+      rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
+      rotationMax: new THREE.Vector3(0, 0, 0),
+      rotationMap: { x: rotationMapOf("bicep_l") },
+    },
+    shoulder_l: {
+      index: indexOfLink(/shoulder_l/i),
+      rotationMin: new THREE.Vector3(0, 0, -Math.PI),
+      rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
+      rotationMap: {
+        x: rotationMapOf("shoulder_l", 1, 0),
+        y: rotationMapOf("rotate_l"),
+        z: rotationMapOf("omoplate_l", 1, 0),
+      },
+    },
+
+    hand_r: {
+      index: indexOfLink(/hand_r/i),
+      rotationMin: new THREE.Vector3(0, -Math.PI / 2, 0),
+      rotationMax: new THREE.Vector3(0, 0, 0),
+      rotationMap: { y: rotationMapOf("wrist_r", 1, 0) },
+    },
+    forearm_r: {
+      index: indexOfLink(/forearm_r/i),
+      rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
+      rotationMax: new THREE.Vector3(0, 0, 0),
+      rotationMap: { x: rotationMapOf("bicep_r") },
+    },
+    shoulder_r: {
+      index: indexOfLink(/shoulder_r/i),
+      rotationMin: new THREE.Vector3(0, -Math.PI / 2, 0),
+      rotationMax: new THREE.Vector3(Math.PI, 0, Math.PI / 2),
+      rotationMap: {
+        x: rotationMapOf("shoulder_r", 1, 0),
+        y: rotationMapOf("rotate_r", 1, 0),
+        z: rotationMapOf("omoplate_r"),
+      },
     },
   };
 
@@ -67,21 +126,9 @@ function createIKSolver(refs) {
       target: indexOfLink(/target_l/i),
       effector: indexOfLink(/hand_effector_l/i),
       links: [
-        {
-          index: indexOfLink(/hand_l/i),
-          rotationMin: new THREE.Vector3(0, 0, 0),
-          rotationMax: new THREE.Vector3(0, Math.PI, 0),
-        },
-        {
-          index: indexOfLink(/forearm_l/i),
-          rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
-          rotationMax: new THREE.Vector3(0, 0, 0),
-        },
-        {
-          index: indexOfLink(/shoulder_l/i),
-          rotationMin: new THREE.Vector3(0, 0, -Math.PI),
-          rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
-        },
+        links.hand_l,
+        links.forearm_l,
+        links.shoulder_l,
         links.topstom,
         links.midstom,
       ],
@@ -90,21 +137,9 @@ function createIKSolver(refs) {
       target: indexOfLink(/target_r/i),
       effector: indexOfLink(/hand_effector_r/i),
       links: [
-        {
-          index: indexOfLink(/hand_r/i),
-          rotationMin: new THREE.Vector3(0, -Math.PI, 0),
-          rotationMax: new THREE.Vector3(0, 0, 0),
-        },
-        {
-          index: indexOfLink(/forearm_r/i),
-          rotationMin: new THREE.Vector3(-Math.PI / 2, 0, 0),
-          rotationMax: new THREE.Vector3(0, 0, 0),
-        },
-        {
-          index: indexOfLink(/shoulder_r/i),
-          rotationMin: new THREE.Vector3(0, -Math.PI / 2, 0),
-          rotationMax: new THREE.Vector3(Math.PI, 0, Math.PI / 2),
-        },
+        links.hand_r,
+        links.forearm_r,
+        links.shoulder_r,
         links.topstom,
         links.midstom,
       ],
@@ -118,6 +153,7 @@ function createIKSolver(refs) {
   const v0 = new THREE.Vector3();
   const q0 = new THREE.Quaternion();
   const q1 = new THREE.Quaternion();
+
   function updateIK() {
     ikSolver.update();
 
@@ -125,16 +161,40 @@ function createIKSolver(refs) {
     refs.target.getWorldPosition(target);
     refs.head.lookAt(target);
     refs.head.rotation.setFromVector3(
-      v0.setFromEuler(refs.head.rotation).max(links.head.rotationMin)
-    );
-    refs.head.rotation.setFromVector3(
-      v0.setFromEuler(refs.head.rotation).min(links.head.rotationMax)
+      v0
+        .setFromEuler(refs.head.rotation)
+        .clamp(links.head.rotationMin, links.head.rotationMax)
     );
     q1.copy(refs.head.quaternion);
     refs.head.quaternion.slerpQuaternions(q0, q1, 0.1);
   }
 
-  return { ikHelper, ikSolver, updateIK };
+  const mapLinear = THREE.MathUtils.mapLinear;
+  const rotationMap = {};
+  function getRotationMap() {
+    for (const key in links) {
+      const link = links[key];
+      const bone = refs.inmoov.skeleton.bones[link.index];
+
+      for (const axis in link.rotationMap) {
+        const { part, from, to } = link.rotationMap[axis];
+
+        rotationMap[part] = Number(
+          mapLinear(
+            bone.rotation[axis],
+            link.rotationMin[axis],
+            link.rotationMax[axis],
+            from,
+            to
+          ).toFixed(2)
+        );
+      }
+    }
+
+    return rotationMap;
+  }
+
+  return { ikHelper, ikSolver, updateIK, getRotationMap };
 }
 
 async function createScene(modelPath) {
