@@ -28,7 +28,7 @@ export async function init(sceneContainerSelector, modelPath) {
   });
 
   const sceneContainer = document.querySelector(sceneContainerSelector);
-  sceneContainer.appendChild(renderer.domElement);
+  sceneContainer.replaceChildren(renderer.domElement);
 
   const resizeObserver = new ResizeObserver(([entry]) => {
     const { width, height } = entry.contentRect;

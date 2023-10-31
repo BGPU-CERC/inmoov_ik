@@ -26,11 +26,13 @@
       }
     </script>
 
+    <div id="inmoov_ik"></div>
+
     <script type="module">
       import { GUI } from "three/addons/libs/lil-gui.module.min.js";
       import { init } from "./index.js";
 
-      const scene = await init("body", "inmoov.glb");
+      const scene = await init("#inmoov_ik", "inmoov.glb");
 
       const gui = new GUI();
       const rotationMap = scene.getRotationMap();
