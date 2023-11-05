@@ -33,7 +33,8 @@ export async function init(sceneContainerSelector, modelPath) {
   sceneContainer.replaceChildren(renderer.domElement);
 
   const resizeObserver = new ResizeObserver(([entry]) => {
-    const { width, height } = entry.contentRect;
+    const width = Math.round(entry.contentRect.width);
+    const height = Math.round(entry.contentRect.height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height);
@@ -265,7 +266,7 @@ function createTargetControls(target, renderer, camera, cameraControls) {
 }
 
 function createRenderer() {
-  const renderer = new THREE.WebGLRenderer();
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   return renderer;
 }
