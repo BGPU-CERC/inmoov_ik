@@ -7,7 +7,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const mapLinear = THREE.MathUtils.mapLinear;
+export const mapLinear = THREE.MathUtils.mapLinear;
 
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
@@ -47,7 +47,7 @@ export async function init(sceneContainerSelector, modelPath) {
     renderer.render(scene, camera);
   });
 
-  return { getRotationMap, mapLinear };
+  return { getRotationMap };
 }
 
 function createIKSolver(refs) {
