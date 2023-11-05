@@ -7,6 +7,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+const mapLinear = THREE.MathUtils.mapLinear;
+
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
   const { scene, refs } = await createScene(modelPath);
@@ -45,7 +47,7 @@ export async function init(sceneContainerSelector, modelPath) {
     renderer.render(scene, camera);
   });
 
-  return { getRotationMap };
+  return { getRotationMap, mapLinear };
 }
 
 function createIKSolver(refs) {
@@ -88,11 +90,11 @@ function createIKSolver(refs) {
     },
     shoulder_l: {
       index: indexOfLink(/shoulder_l/i),
-      rotationMin: new THREE.Vector3(0, 0, -Math.PI),
-      rotationMax: new THREE.Vector3(Math.PI, Math.PI / 2, 0),
+      rotationMin: new THREE.Vector3(0, -Math.PI / 3, -Math.PI),
+      rotationMax: new THREE.Vector3(Math.PI, Math.PI / 3, 0),
       rotationMap: {
-        x: rotationMapOf("shoulder_l", 1, 0),
-        y: rotationMapOf("rotate_l"),
+        x: rotationMapOf("shoulder_l", 0, 1),
+        y: rotationMapOf("rotate_l", 1, 0),
         z: rotationMapOf("omoplate_l", 1, 0),
       },
     },
@@ -111,11 +113,11 @@ function createIKSolver(refs) {
     },
     shoulder_r: {
       index: indexOfLink(/shoulder_r/i),
-      rotationMin: new THREE.Vector3(0, -Math.PI / 2, 0),
-      rotationMax: new THREE.Vector3(Math.PI, 0, Math.PI / 2),
+      rotationMin: new THREE.Vector3(0, -Math.PI / 3, 0),
+      rotationMax: new THREE.Vector3(Math.PI, Math.PI / 3, Math.PI / 2),
       rotationMap: {
         x: rotationMapOf("shoulder_r", 1, 0),
-        y: rotationMapOf("rotate_r", 1, 0),
+        y: rotationMapOf("rotate_r", 0, 1),
         z: rotationMapOf("omoplate_r"),
       },
     },
@@ -169,7 +171,6 @@ function createIKSolver(refs) {
     refs.head.quaternion.slerpQuaternions(q0, q1, 0.1);
   }
 
-  const mapLinear = THREE.MathUtils.mapLinear;
   const rotationMap = {};
   function getRotationMap() {
     for (const key in links) {
