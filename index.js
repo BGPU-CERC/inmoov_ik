@@ -241,9 +241,10 @@ async function createScene(modelPath) {
 function createCamera(renderer) {
   const aspect = window.innerWidth / window.innerHeight;
   const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-  camera.position.set(1, 1, 2);
+  camera.position.set(0, 0.75, 1.55);
 
   const cameraControls = new OrbitControls(camera, renderer.domElement);
+  cameraControls.target.copy(new THREE.Vector3(0, 0.25, 0));
   cameraControls.update();
 
   return { camera, cameraControls };
