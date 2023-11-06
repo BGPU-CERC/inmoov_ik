@@ -224,6 +224,7 @@ async function createScene(modelPath) {
   scene.traverse((n) => {
     if (n.isSkinnedMesh && n.name.match(/midstom/i)) {
       refs.inmoov = n;
+      n.visible = false;
     } else if (n.isBone && n.name.match(/target_l/i)) {
       refs.target_l = n;
     } else if (n.isBone && n.name.match(/target_r/i)) {
