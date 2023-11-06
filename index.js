@@ -117,7 +117,7 @@ function createIKSolver(refs) {
       rotationMin: new THREE.Vector3(0, -Math.PI / 3, 0),
       rotationMax: new THREE.Vector3(Math.PI, Math.PI / 3, Math.PI / 2),
       rotationMap: {
-        x: rotationMapOf("shoulder_r", 1, 0),
+        x: rotationMapOf("shoulder_r", 0, 1),
         y: rotationMapOf("rotate_r", 0, 1),
         z: rotationMapOf("omoplate_r"),
       },
