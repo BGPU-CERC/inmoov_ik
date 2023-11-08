@@ -8,6 +8,8 @@ import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export const mapLinear = THREE.MathUtils.mapLinear;
+export const TARGET_L = 0;
+export const TARGET_R = 1;
 
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
@@ -48,7 +50,26 @@ export async function init(sceneContainerSelector, modelPath) {
     renderer.render(scene, camera);
   });
 
-  return { getRotationMap };
+  const targetAxis = new THREE.Vector3();
+  function translateTargetOnAxis(x, y, z, distance) {
+    targetAxis.set(z, y, x);
+    refs.target.translateOnAxis(targetAxis, distance);
+  }
+
+  function setTarget(targetId) {
+    switch (targetId) {
+      case TARGET_L:
+        refs.target = refs.target = refs.target_l;
+        break;
+      case TARGET_R:
+        refs.target = refs.target = refs.target_r;
+        break;
+      default:
+        console.log(targetId);
+    }
+  }
+
+  return { getRotationMap, translateTargetOnAxis, setTarget };
 }
 
 function createIKSolver(refs) {
@@ -60,9 +81,12 @@ function createIKSolver(refs) {
   const links = {
     head: {
       index: indexOfLink(/head/i),
-      rotationMin: new THREE.Vector3(-0.5, -0.5, -0.5),
-      rotationMax: new THREE.Vector3(0.5, 0.5, 0.5),
-      rotationMap: { x: rotationMapOf("neck"), y: rotationMapOf("rothead") },
+      rotationMin: new THREE.Vector3(-0.5, -1.1, -0.5),
+      rotationMax: new THREE.Vector3(0.5, 1.1, 0.5),
+      rotationMap: {
+        x: rotationMapOf("neck"),
+        y: rotationMapOf("rothead", 1, 0),
+      },
     },
     topstom: {
       index: indexOfLink(/topstom/i),
