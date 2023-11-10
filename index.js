@@ -194,6 +194,9 @@ function createIKSolver(refs) {
     );
     q1.copy(refs.head.quaternion);
     refs.head.quaternion.slerpQuaternions(q0, q1, 0.1);
+
+    refs.shoulder_joint_l.rotation.x = refs.shoulder_bone_l.rotation.x;
+    refs.omoplate_l.rotation.z = refs.shoulder_bone_l.rotation.z;
   }
 
   const rotationMap = {};
@@ -255,6 +258,12 @@ async function createScene(modelPath) {
       refs.target_r = n;
     } else if (n.isBone && n.name.match(/head/i)) {
       refs.head = n;
+    } else if (n.isBone && n.name.match(/shoulder_l/i)) {
+      refs.shoulder_bone_l = n;
+    } else if (n.name.match(/left.+shoulder/i)) {
+      refs.shoulder_joint_l = n;
+    } else if (n.name.match(/left.+omoplate/i)) {
+      refs.omoplate_l = n;
     }
   });
 
