@@ -62,7 +62,7 @@ export function controlScene(scene) {
           scene.setTarget(TARGET_L);
           break;
         case 0:
-          location.reload();
+          scene.resetTargets();
           break;
         default:
           console.log(`Button pressed: ${i}`);

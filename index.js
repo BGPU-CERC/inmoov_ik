@@ -15,7 +15,7 @@ export const TARGET_R = 1;
 
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
-  const { scene, refs } = await createScene(modelPath);
+  const { scene, refs, resetTargets } = await createScene(modelPath);
   const { camera, cameraControls } = createCamera(renderer);
   const { ikHelper, updateIK, getRotationMap } = createIKSolver(refs);
   scene.add(ikHelper);
@@ -71,7 +71,7 @@ export async function init(sceneContainerSelector, modelPath) {
     }
   }
 
-  return { getRotationMap, translateTargetOnAxis, setTarget };
+  return { getRotationMap, translateTargetOnAxis, setTarget, resetTargets };
 }
 
 function createIKSolver(refs) {
@@ -274,6 +274,7 @@ async function createScene(modelPath) {
       n.visible = false;
     } else if (n.isBone && n.name.match(/target_l/i)) {
       refs.target_l = n;
+      refs.target = refs.target_l;
     } else if (n.isBone && n.name.match(/target_r/i)) {
       refs.target_r = n;
     } else if (n.isBone && n.name.match(/head/i)) {
@@ -281,9 +282,17 @@ async function createScene(modelPath) {
     }
   });
 
-  refs.target = refs.target_l;
+  [refs.target_l, refs.target_r].forEach(
+    (target) => (target.rest = new THREE.Vector3().copy(target.position))
+  );
 
-  return { scene, refs };
+  function resetTargets() {
+    [refs.target_l, refs.target_r].forEach((target) =>
+      target.position.copy(target.rest)
+    );
+  }
+
+  return { scene, refs, resetTargets };
 }
 
 function createCamera(renderer) {
