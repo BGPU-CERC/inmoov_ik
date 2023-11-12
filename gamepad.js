@@ -37,9 +37,16 @@ function loop() {
   animationFrameRequest = requestAnimationFrame(loop);
 }
 
+function threshold(axis) {
+  return Math.abs(axis) >= 0.05 ? axis : 0;
+}
+
 export function controlScene(scene) {
   onloop = (gamepad) => {
-    const [x1, y1, x2, y2] = gamepad.axes;
+    const x1 = threshold(gamepad.axes[0]);
+    const y1 = threshold(gamepad.axes[1]);
+    const x2 = threshold(gamepad.axes[2]);
+    const y2 = threshold(gamepad.axes[3]);
     scene.translateTargetOnAxis(x1, 0, -y1, 0.025);
     scene.translateTargetOnAxis(x2, -y2, 0, 0.025);
 
