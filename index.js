@@ -310,6 +310,12 @@ function createTargetControls(target, renderer, camera, cameraControls) {
   targetControls.addEventListener("mouseDown", () => setCamEnabled(false));
   targetControls.addEventListener("mouseUp", () => setCamEnabled(true));
 
+  const targetPosMin = new THREE.Vector3(-5, -2, -5);
+  const targetPosMax = new THREE.Vector3(5, 5, 5);
+  targetControls.addEventListener("objectChange", () => {
+    target.position.clamp(targetPosMin, targetPosMax);
+  });
+
   return targetControls;
 }
 
