@@ -7,6 +7,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+const PI = Math.PI;
+
 export const mapLinear = THREE.MathUtils.mapLinear;
 export const TARGET_L = 0;
 export const TARGET_R = 1;
@@ -113,15 +115,23 @@ function createIKSolver(refs) {
       rotationMax: new THREE.Vector3(0, 0, 0),
       rotationMap: { x: rotationMapOf("bicep_l") },
     },
+    rotate_l: {
+      index: indexOfLink(/rotate_l/i),
+      rotationMin: new THREE.Vector3(-PI / 2, -PI, 0),
+      rotationMax: new THREE.Vector3(-PI / 2, -0.2, 0),
+      rotationMap: { y: rotationMapOf("rotate_l", 1, 0) },
+    },
     shoulder_l: {
       index: indexOfLink(/shoulder_l/i),
-      rotationMin: new THREE.Vector3(0, -Math.PI / 3, -Math.PI),
-      rotationMax: new THREE.Vector3(Math.PI, Math.PI / 3, 0),
-      rotationMap: {
-        x: rotationMapOf("shoulder_l", 0, 1),
-        y: rotationMapOf("rotate_l", 1, 0),
-        z: rotationMapOf("omoplate_l", 1, 0),
-      },
+      rotationMin: new THREE.Vector3(-0.69, 0, -PI / 2),
+      rotationMax: new THREE.Vector3(PI / 2, 0, -PI / 2),
+      rotationMap: { y: rotationMapOf("shoulder_l", 0, 1) },
+    },
+    omoplate_l: {
+      index: indexOfLink(/omoplate_l/i),
+      rotationMin: new THREE.Vector3(PI, 0, -1.05),
+      rotationMax: new THREE.Vector3(PI, 0, 0),
+      rotationMap: { z: rotationMapOf("omoplate_l", 0, 1) },
     },
 
     hand_r: {
@@ -136,15 +146,23 @@ function createIKSolver(refs) {
       rotationMax: new THREE.Vector3(0, 0, 0),
       rotationMap: { x: rotationMapOf("bicep_r") },
     },
+    rotate_r: {
+      index: indexOfLink(/rotate_r/i),
+      rotationMin: new THREE.Vector3(-PI / 2, 0.2, 0),
+      rotationMax: new THREE.Vector3(-PI / 2, PI, 0),
+      rotationMap: { y: rotationMapOf("rotate_r", 1, 0) },
+    },
     shoulder_r: {
       index: indexOfLink(/shoulder_r/i),
-      rotationMin: new THREE.Vector3(0, -Math.PI / 3, 0),
-      rotationMax: new THREE.Vector3(Math.PI, Math.PI / 3, Math.PI / 2),
-      rotationMap: {
-        x: rotationMapOf("shoulder_r", 0, 1),
-        y: rotationMapOf("rotate_r", 0, 1),
-        z: rotationMapOf("omoplate_r"),
-      },
+      rotationMin: new THREE.Vector3(-0.69, 0, PI / 2),
+      rotationMax: new THREE.Vector3(PI / 2, 0, PI / 2),
+      rotationMap: { y: rotationMapOf("shoulder_r", 0, 1) },
+    },
+    omoplate_r: {
+      index: indexOfLink(/omoplate_r/i),
+      rotationMin: new THREE.Vector3(PI, 0, 0),
+      rotationMax: new THREE.Vector3(PI, 0, 1.05),
+      rotationMap: { z: rotationMapOf("omoplate_r", 0, 1) },
     },
   };
 
@@ -155,7 +173,9 @@ function createIKSolver(refs) {
       links: [
         links.hand_l,
         links.forearm_l,
+        links.rotate_l,
         links.shoulder_l,
+        links.omoplate_l,
         links.topstom,
         links.midstom,
       ],
@@ -166,7 +186,9 @@ function createIKSolver(refs) {
       links: [
         links.hand_r,
         links.forearm_r,
+        links.rotate_r,
         links.shoulder_r,
+        links.omoplate_r,
         links.topstom,
         links.midstom,
       ],
@@ -194,9 +216,6 @@ function createIKSolver(refs) {
     );
     q1.copy(refs.head.quaternion);
     refs.head.quaternion.slerpQuaternions(q0, q1, 0.1);
-
-    refs.shoulder_joint_l.rotation.x = refs.shoulder_bone_l.rotation.x;
-    refs.omoplate_l.rotation.z = refs.shoulder_bone_l.rotation.z;
   }
 
   const rotationMap = {};
@@ -258,12 +277,6 @@ async function createScene(modelPath) {
       refs.target_r = n;
     } else if (n.isBone && n.name.match(/head/i)) {
       refs.head = n;
-    } else if (n.isBone && n.name.match(/shoulder_l/i)) {
-      refs.shoulder_bone_l = n;
-    } else if (n.name.match(/left.+shoulder/i)) {
-      refs.shoulder_joint_l = n;
-    } else if (n.name.match(/left.+omoplate/i)) {
-      refs.omoplate_l = n;
     }
   });
 
