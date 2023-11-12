@@ -88,6 +88,7 @@ function createIKSolver(refs) {
       rotationMap: {
         x: rotationMapOf("neck"),
         y: rotationMapOf("rothead", 1, 0),
+        z: rotationMapOf("rollneck", 0, 1),
       },
     },
     topstom: {
@@ -113,19 +114,19 @@ function createIKSolver(refs) {
       index: indexOfLink(/forearm_l/i),
       rotationMin: new THREE.Vector3(0, 0, 0),
       rotationMax: new THREE.Vector3(1.2, 0, 0),
-      rotationMap: { x: rotationMapOf("bicep_l") },
+      rotationMap: { x: rotationMapOf("bicep_l", 1, 0) },
     },
     rotate_l: {
       index: indexOfLink(/rotate_l/i),
       rotationMin: new THREE.Vector3(-PI / 2, 0, -PI / 2),
       rotationMax: new THREE.Vector3(1.5, 0, -PI / 2),
-      rotationMap: { y: rotationMapOf("rotate_l", 1, 0) },
+      rotationMap: { x: rotationMapOf("rotate_l", 1, 0) },
     },
     shoulder_l: {
       index: indexOfLink(/shoulder_l/i),
       rotationMin: new THREE.Vector3(0, 0, PI / 2),
       rotationMax: new THREE.Vector3((5 * PI) / 6, 0, PI / 2),
-      rotationMap: { y: rotationMapOf("shoulder_l", 0, 1) },
+      rotationMap: { x: rotationMapOf("shoulder_l", 1, 0) },
     },
     omoplate_l: {
       index: indexOfLink(/omoplate_l/i),
@@ -144,25 +145,25 @@ function createIKSolver(refs) {
       index: indexOfLink(/forearm_r/i),
       rotationMin: new THREE.Vector3(0, 0, 0),
       rotationMax: new THREE.Vector3(1.2, 0, 0),
-      rotationMap: { x: rotationMapOf("bicep_r") },
+      rotationMap: { x: rotationMapOf("bicep_r", 1, 0) },
     },
     rotate_r: {
       index: indexOfLink(/rotate_r/i),
       rotationMin: new THREE.Vector3(-PI / 2, 0, PI / 2),
       rotationMax: new THREE.Vector3(1.5, 0, PI / 2),
-      rotationMap: { y: rotationMapOf("rotate_r", 1, 0) },
+      rotationMap: { x: rotationMapOf("rotate_r", 1, 0) },
     },
     shoulder_r: {
       index: indexOfLink(/shoulder_r/i),
       rotationMin: new THREE.Vector3(0, 0, -PI / 2),
       rotationMax: new THREE.Vector3((5 * PI) / 6, 0, -PI / 2),
-      rotationMap: { y: rotationMapOf("shoulder_r", 0, 1) },
+      rotationMap: { x: rotationMapOf("shoulder_r", 1, 0) },
     },
     omoplate_r: {
       index: indexOfLink(/omoplate_r/i),
       rotationMin: new THREE.Vector3(0, 0, (2 * PI) / 3),
       rotationMax: new THREE.Vector3(0, 0, PI),
-      rotationMap: { z: rotationMapOf("omoplate_r", 0, 1) },
+      rotationMap: { z: rotationMapOf("omoplate_r", 1, 0) },
     },
   };
 
