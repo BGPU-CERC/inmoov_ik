@@ -139,6 +139,7 @@ function createIKSolver(refs) {
     omoplate_l: {
       index: indexOfLink(/omoplate_l/i),
       rotationMin: new THREE.Vector3(0, 0, -PI),
+      rotationMinThreshold: new THREE.Vector3(0, 0, -PI + 0.1),
       rotationMax: new THREE.Vector3(0, 0, -(2 * PI) / 3),
       rotationMap: { z: rotationMapOf("omoplate_l", 0, 1) },
     },
@@ -171,6 +172,7 @@ function createIKSolver(refs) {
       index: indexOfLink(/omoplate_r/i),
       rotationMin: new THREE.Vector3(0, 0, (2 * PI) / 3),
       rotationMax: new THREE.Vector3(0, 0, PI),
+      rotationMaxThreshold: new THREE.Vector3(0, 0, PI - 0.1),
       rotationMap: { z: rotationMapOf("omoplate_r", 1, 0) },
     },
   };
@@ -224,7 +226,24 @@ function createIKSolver(refs) {
         .clamp(links.head.rotationMin, links.head.rotationMax)
     );
     q1.copy(refs.head.quaternion);
-    refs.head.quaternion.slerpQuaternions(q0, q1, 0.1);
+    refs.head.quaternion.slerpQuaternions(q0, q1, 0.1); // fixme: infinite slerp
+
+    refs.omoplate_l.rotation.setFromVector3(
+      v0
+        .setFromEuler(refs.omoplate_l.rotation)
+        .clamp(
+          links.omoplate_l.rotationMinThreshold,
+          links.omoplate_l.rotationMax
+        )
+    );
+    refs.omoplate_r.rotation.setFromVector3(
+      v0
+        .setFromEuler(refs.omoplate_r.rotation)
+        .clamp(
+          links.omoplate_r.rotationMin,
+          links.omoplate_r.rotationMaxThreshold
+        )
+    );
   }
 
   const rotationMap = {};
@@ -287,6 +306,10 @@ async function createScene(modelPath) {
       refs.target_r = n;
     } else if (n.isBone && n.name.match(/head/i)) {
       refs.head = n;
+    } else if (n.isBone && n.name.match(/omoplate_l/i)) {
+      refs.omoplate_l = n;
+    } else if (n.isBone && n.name.match(/omoplate_r/i)) {
+      refs.omoplate_r = n;
     }
   });
 
