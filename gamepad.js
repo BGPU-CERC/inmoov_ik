@@ -1,4 +1,6 @@
 import { TARGET_L, TARGET_R } from "./index.js";
+import { keydown } from "./keyboard.js";
+import { wheel, dispatchTo as wheelDispatchTo } from "./mouse.js";
 
 let onloop = undefined;
 let animationFrameRequest = null;
@@ -38,10 +40,12 @@ function loop() {
 }
 
 function threshold(axis) {
-  return Math.abs(axis) >= 0.05 ? axis : 0;
+  return Math.abs(axis) >= 0.06 ? axis : 0;
 }
 
 export function controlScene(scene) {
+  wheelDispatchTo(scene.domElement);
+
   onloop = (gamepad) => {
     const x1 = threshold(gamepad.axes[0]);
     const y1 = threshold(gamepad.axes[1]);
@@ -61,6 +65,29 @@ export function controlScene(scene) {
         case 11:
           scene.setTarget(TARGET_L);
           break;
+
+        case 12:
+          keydown("ArrowUp", true);
+          break;
+        case 13:
+          keydown("ArrowDown", true);
+          break;
+        case 14:
+          keydown("ArrowLeft", true);
+          break;
+        case 15:
+          keydown("ArrowRight", true);
+          break;
+        case 6:
+          wheel(-1 / 2);
+          break;
+        case 7:
+          wheel(1);
+          break;
+        case 1:
+          scene.resetCamera();
+          break;
+
         case 0:
           scene.resetTargets();
           break;

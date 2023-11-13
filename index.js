@@ -71,7 +71,15 @@ export async function init(sceneContainerSelector, modelPath) {
     }
   }
 
-  return { getRotationMap, translateTargetOnAxis, setTarget, resetTargets };
+  return {
+    domElement: renderer.domElement,
+
+    getRotationMap,
+    translateTargetOnAxis,
+    setTarget,
+    resetTargets,
+    resetCamera: cameraControls.reset,
+  };
 }
 
 function createIKSolver(refs) {
@@ -298,11 +306,26 @@ async function createScene(modelPath) {
 function createCamera(renderer) {
   const aspect = window.innerWidth / window.innerHeight;
   const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-  camera.position.set(0, 0.75, 1.55);
+  camera.position.set(0, 0.5, 1.3);
 
   const cameraControls = new OrbitControls(camera, renderer.domElement);
   cameraControls.target.copy(new THREE.Vector3(0, 0.25, 0));
   cameraControls.update();
+  cameraControls.listenToKeyEvents(window);
+  cameraControls.saveState();
+
+  const zoomSpeed = 0.5;
+  cameraControls.zoomSpeed = zoomSpeed;
+  const rotateSpeed = 5;
+  cameraControls.rotateSpeed = rotateSpeed;
+  document.addEventListener("mousedown", () => {
+    cameraControls.rotateSpeed = 1;
+    cameraControls.zoomSpeed = 1;
+  });
+  document.addEventListener("mouseup", () => {
+    cameraControls.rotateSpeed = rotateSpeed;
+    cameraControls.zoomSpeed = zoomSpeed;
+  });
 
   return { camera, cameraControls };
 }
