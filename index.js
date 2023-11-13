@@ -214,35 +214,29 @@ function createIKSolver(refs) {
   const q0 = new THREE.Quaternion();
   const q1 = new THREE.Quaternion();
 
+  function clamp(euler, min, max) {
+    euler.setFromVector3(v0.setFromEuler(euler).clamp(min, max));
+  }
+
   function updateIK() {
     ikSolver.update();
 
     q0.copy(refs.head.quaternion);
     refs.target.getWorldPosition(target);
     refs.head.lookAt(target);
-    refs.head.rotation.setFromVector3(
-      v0
-        .setFromEuler(refs.head.rotation)
-        .clamp(links.head.rotationMin, links.head.rotationMax)
-    );
+    clamp(refs.head.rotation, links.head.rotationMin, links.head.rotationMax);
     q1.copy(refs.head.quaternion);
     refs.head.quaternion.slerpQuaternions(q0, q1, 0.1); // fixme: infinite slerp
 
-    refs.omoplate_l.rotation.setFromVector3(
-      v0
-        .setFromEuler(refs.omoplate_l.rotation)
-        .clamp(
-          links.omoplate_l.rotationMinThreshold,
-          links.omoplate_l.rotationMax
-        )
+    clamp(
+      refs.omoplate_l.rotation,
+      links.omoplate_l.rotationMinThreshold,
+      links.omoplate_l.rotationMax
     );
-    refs.omoplate_r.rotation.setFromVector3(
-      v0
-        .setFromEuler(refs.omoplate_r.rotation)
-        .clamp(
-          links.omoplate_r.rotationMin,
-          links.omoplate_r.rotationMaxThreshold
-        )
+    clamp(
+      refs.omoplate_r.rotation,
+      links.omoplate_r.rotationMin,
+      links.omoplate_r.rotationMaxThreshold
     );
   }
 
