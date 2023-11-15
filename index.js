@@ -120,7 +120,7 @@ function createIKSolver(refs) {
     },
     forearm_l: {
       index: indexOfLink(/forearm_l/i),
-      rotationMin: new THREE.Vector3(0, 0, 0),
+      rotationMin: new THREE.Vector3(0.4, 0, 0),
       rotationMax: new THREE.Vector3(1.2, 0, 0),
       rotationMap: { x: rotationMapOf("bicep_l", 1, 0) },
     },
@@ -152,7 +152,7 @@ function createIKSolver(refs) {
     },
     forearm_r: {
       index: indexOfLink(/forearm_r/i),
-      rotationMin: new THREE.Vector3(0, 0, 0),
+      rotationMin: new THREE.Vector3(0.4, 0, 0),
       rotationMax: new THREE.Vector3(1.2, 0, 0),
       rotationMap: { x: rotationMapOf("bicep_r", 1, 0) },
     },
