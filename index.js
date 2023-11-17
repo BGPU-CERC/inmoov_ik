@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { debounce } from "./debounce.js";
 import {
   CCDIKHelper,
   CCDIKSolver,
@@ -24,7 +25,7 @@ export async function init(sceneContainerSelector, modelPath) {
     const args = [target, renderer, camera, cameraControls];
     const controls = createTargetControls(...args);
     controls.addEventListener("mouseDown", () => (refs.target = target));
-    controls.addEventListener("objectChange", clampTarget);
+    controls.addEventListener("objectChange", () => clamp(target));
     scene.add(controls);
   });
 
@@ -55,15 +56,19 @@ export async function init(sceneContainerSelector, modelPath) {
 
   const targetPosMin = new THREE.Vector3(-5, -2, -5);
   const targetPosMax = new THREE.Vector3(5, 5, 5);
-  function clampTarget() {
-    refs.target.position.clamp(targetPosMin, targetPosMax);
+  function clamp(object) {
+    object.position.clamp(targetPosMin, targetPosMax);
   }
 
-  const targetAxis = new THREE.Vector3();
+  const translateAxis = new THREE.Vector3();
+  function translateOnAxis(object, x, y, z, distance) {
+    translateAxis.set(z, y, x);
+    object.translateOnAxis(translateAxis, distance);
+    clamp(object);
+  }
+
   function translateTargetOnAxis(x, y, z, distance) {
-    targetAxis.set(z, y, x);
-    refs.target.translateOnAxis(targetAxis, distance);
-    clampTarget();
+    translateOnAxis(refs.target, x, y, z, distance);
   }
 
   function setTarget(targetId) {
@@ -79,14 +84,40 @@ export async function init(sceneContainerSelector, modelPath) {
     }
   }
 
+  function idleTick() {
+    const rand = () => (Math.random() - 0.5) / 2.5;
+    translateOnAxis(refs.target_l, rand(), rand(), rand(), rand());
+    translateOnAxis(refs.target_r, rand(), rand(), rand(), rand());
+    translateOnAxis(refs.target_head, rand(), rand(), rand(), rand());
+  }
+
+  let idleInterval = null;
+  let toggleIdle = debounce(() => {
+    if (idleInterval) {
+      clearInterval(idleInterval);
+      idleInterval = null;
+    } else {
+      idleInterval = setInterval(idleTick, 0.8 * 1000);
+    }
+
+    console.log(!!idleInterval);
+  }, 0.5 * 1000);
+
   return {
     domElement: renderer.domElement,
 
     getRotationMap,
+    translateOnAxis,
     translateTargetOnAxis,
     setTarget,
     resetTargets,
     resetCamera: cameraControls.reset,
+
+    toggleIdle,
+
+    target_head: refs.target_head,
+    target_l: refs.target_l,
+    target_r: refs.target_r,
   };
 }
 
@@ -314,9 +345,9 @@ async function createScene(modelPath) {
     }
   });
 
-  refs.forward = new THREE.Object3D();
-  refs.forward.position.set(0, 0.55, 1);
-  refs.target = refs.forward;
+  refs.target_head = new THREE.Object3D();
+  refs.target_head.position.set(0, 0.55, 1);
+  refs.target = refs.target_head;
 
   [refs.target_l, refs.target_r].forEach(
     (target) => (target.rest = new THREE.Vector3().copy(target.position))

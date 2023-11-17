@@ -91,6 +91,9 @@ export function controlScene(scene) {
         case 0:
           scene.resetTargets();
           break;
+        case 3:
+          scene.toggleIdle();
+          break;
         default:
           console.log(`Button pressed: ${i}`);
       }
