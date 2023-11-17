@@ -24,6 +24,7 @@ export async function init(sceneContainerSelector, modelPath) {
     const args = [target, renderer, camera, cameraControls];
     const controls = createTargetControls(...args);
     controls.addEventListener("mouseDown", () => (refs.target = target));
+    controls.addEventListener("objectChange", clampTarget);
     scene.add(controls);
   });
 
@@ -52,10 +53,17 @@ export async function init(sceneContainerSelector, modelPath) {
     renderer.render(scene, camera);
   });
 
+  const targetPosMin = new THREE.Vector3(-5, -2, -5);
+  const targetPosMax = new THREE.Vector3(5, 5, 5);
+  function clampTarget() {
+    refs.target.position.clamp(targetPosMin, targetPosMax);
+  }
+
   const targetAxis = new THREE.Vector3();
   function translateTargetOnAxis(x, y, z, distance) {
     targetAxis.set(z, y, x);
     refs.target.translateOnAxis(targetAxis, distance);
+    clampTarget();
   }
 
   function setTarget(targetId) {
@@ -362,12 +370,6 @@ function createTargetControls(target, renderer, camera, cameraControls) {
   const setCamEnabled = (state) => (state = cameraControls.enabled = state);
   targetControls.addEventListener("mouseDown", () => setCamEnabled(false));
   targetControls.addEventListener("mouseUp", () => setCamEnabled(true));
-
-  const targetPosMin = new THREE.Vector3(-5, -2, -5);
-  const targetPosMax = new THREE.Vector3(5, 5, 5);
-  targetControls.addEventListener("objectChange", () => {
-    target.position.clamp(targetPosMin, targetPosMax);
-  });
 
   return targetControls;
 }
