@@ -354,6 +354,7 @@ async function createScene(modelPath) {
   );
 
   function resetTargets() {
+    refs.target = refs.target_head;
     [refs.target_l, refs.target_r].forEach((target) =>
       target.position.copy(target.rest)
     );
