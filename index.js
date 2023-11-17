@@ -295,7 +295,6 @@ async function createScene(modelPath) {
       n.visible = false;
     } else if (n.isBone && n.name.match(/target_l/i)) {
       refs.target_l = n;
-      refs.target = refs.target_l;
     } else if (n.isBone && n.name.match(/target_r/i)) {
       refs.target_r = n;
     } else if (n.isBone && n.name.match(/head/i)) {
@@ -306,6 +305,10 @@ async function createScene(modelPath) {
       refs.omoplate_r = n;
     }
   });
+
+  refs.forward = new THREE.Object3D();
+  refs.forward.position.set(0, 0.55, 1);
+  refs.target = refs.forward;
 
   [refs.target_l, refs.target_r].forEach(
     (target) => (target.rest = new THREE.Vector3().copy(target.position))

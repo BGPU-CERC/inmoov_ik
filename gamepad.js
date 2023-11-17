@@ -51,8 +51,8 @@ export function controlScene(scene) {
     const y1 = threshold(gamepad.axes[1]);
     const x2 = threshold(gamepad.axes[2]);
     const y2 = threshold(gamepad.axes[3]);
-    scene.translateTargetOnAxis(x1, 0, -y1, 0.025);
-    scene.translateTargetOnAxis(x2, -y2, 0, 0.025);
+    scene.translateTargetOnAxis(0, -y2, x2, 0.025);
+    scene.translateTargetOnAxis(y1, 0, x1, 0.025);
 
     for (let i = 0; i < gamepad.buttons.length; i++) {
       const button = gamepad.buttons[i];
