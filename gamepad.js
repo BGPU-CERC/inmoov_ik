@@ -32,7 +32,7 @@ function loop() {
   if (!onloop) return;
 
   const gamepads = navigator.getGamepads();
-  const gamepad = gamepads[0];
+  const gamepad = gamepads.find(Boolean);
 
   onloop(gamepad);
 
@@ -78,11 +78,11 @@ export function controlScene(scene) {
         case 15:
           keydown("ArrowRight", true);
           break;
-        case 6:
+        case 4:
           wheel(-1 / 2);
           break;
-        case 7:
-          wheel(1);
+        case 5:
+          wheel(1 / 2);
           break;
         case 1:
           scene.resetCamera();
@@ -94,6 +94,14 @@ export function controlScene(scene) {
         case 3:
           scene.toggleIdle();
           break;
+
+        case 6:
+          debugger;
+          break;
+        case 7:
+          scene.handGrabLeft(button.value);
+          break;
+
         default:
           console.log(`Button pressed: ${i}`);
       }

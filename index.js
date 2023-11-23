@@ -99,9 +99,37 @@ export async function init(sceneContainerSelector, modelPath) {
     } else {
       idleInterval = setInterval(idleTick, 0.8 * 1000);
     }
-
-    console.log(!!idleInterval);
   }, 0.5 * 1000);
+
+  function handGrab(hand, target, value) {
+    value = Number(value.toFixed(2));
+    for (const part in hand.parts) {
+      const finger = hand.parts[part];
+      finger.rotationValue = value;
+      for (const phalanx of finger) {
+        const { from, to, axis } = phalanx.rotationMap;
+        const rotation = mapLinear(value, 0, 1, from, to);
+        phalanx.rotation[axis] = rotation;
+      }
+    }
+    const target_scale = 1 - value / 3;
+    target.scale.set(target_scale, target_scale, target_scale);
+  }
+
+  let handRelease = debounce(
+    (hand, target) => handGrab(hand, target, 0),
+    0.1 * 1000
+  );
+
+  function handGrabLeft(value) {
+    handGrab(refs.hands.l, refs.target_l, value);
+    handRelease(refs.hands.l, refs.target_l);
+  }
+
+  function handGrabRight(value) {
+    handGrab(refs.hands.r, refs.target_r, value);
+    handRelease(refs.hands.r, refs.target_r);
+  }
 
   return {
     domElement: renderer.domElement,
@@ -118,6 +146,9 @@ export async function init(sceneContainerSelector, modelPath) {
     target_head: refs.target_head,
     target_l: refs.target_l,
     target_r: refs.target_r,
+
+    handGrabLeft,
+    handGrabRight,
   };
 }
 
@@ -284,10 +315,8 @@ function createIKSolver(refs) {
     for (const key in links) {
       const link = links[key];
       const bone = refs.inmoov.skeleton.bones[link.index];
-
       for (const axis in link.rotationMap) {
         const { part, from, to } = link.rotationMap[axis];
-
         rotationMap[part] = Number(
           mapLinear(
             bone.rotation[axis],
@@ -297,6 +326,14 @@ function createIKSolver(refs) {
             to
           ).toFixed(2)
         );
+      }
+    }
+
+    for (const side in refs.hands) {
+      const hand = refs.hands[side];
+      for (const part_name in hand.parts) {
+        const part = hand.parts[part_name];
+        rotationMap[part_name] = part.rotationValue;
       }
     }
 
@@ -326,9 +363,16 @@ async function createScene(modelPath) {
   const gridHelper = new THREE.GridHelper(size, divisions);
   scene.add(gridHelper);
 
-  const refs = {};
+  const refs = {
+    hands: {
+      l: { parts: {} },
+      r: { parts: {} },
+    },
+  };
 
   scene.traverse((n) => {
+    let match;
+
     if (n.isSkinnedMesh && n.name.match(/midstom/i)) {
       refs.inmoov = n;
       n.visible = false;
@@ -342,6 +386,31 @@ async function createScene(modelPath) {
       refs.omoplate_l = n;
     } else if (n.isBone && n.name.match(/omoplate_r/i)) {
       refs.omoplate_r = n;
+    } else if ((match = n.name.match(/^f_(\w+)_(\d)_(l|r)$/)) !== null) {
+      const [phalanx, finger, phalanx_number, side] = match;
+      const hand = refs.hands[side];
+      const part = `${finger}_${side}`;
+      hand.parts[part] =
+        hand.parts[part] || Object.assign([], { rotationValue: 0 });
+      hand.parts[part][phalanx_number] = n;
+      hand.parts[part][phalanx_number].rotationMap = {
+        axis: "x",
+        from: 0,
+        to: -PI / 2,
+      };
+
+      if (n.name.match(/thumb_0/)) {
+        Object.assign(hand.parts[part][phalanx_number].rotationMap, {
+          axis: "y",
+          from: PI / 4,
+          to: -PI / 12,
+        });
+      } else if (n.name.match(/thumb_1/)) {
+        Object.assign(hand.parts[part][phalanx_number].rotationMap, {
+          from: 0,
+          to: PI / 2,
+        });
+      }
     }
   });
 
