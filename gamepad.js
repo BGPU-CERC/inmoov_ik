@@ -96,7 +96,7 @@ export function controlScene(scene) {
           break;
 
         case 6:
-          debugger;
+          scene.handGrabRight(button.value);
           break;
         case 7:
           scene.handGrabLeft(button.value);

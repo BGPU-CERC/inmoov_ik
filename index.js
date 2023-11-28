@@ -19,7 +19,6 @@ export async function init(sceneContainerSelector, modelPath) {
   const { scene, refs, resetTargets } = await createScene(modelPath);
   const { camera, cameraControls } = createCamera(renderer);
   const { ikHelper, updateIK, getRotationMap } = createIKSolver(refs);
-  scene.add(ikHelper);
 
   [refs.target_l, refs.target_r].forEach((target) => {
     const args = [target, renderer, camera, cameraControls];
