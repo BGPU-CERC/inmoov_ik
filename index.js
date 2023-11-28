@@ -352,15 +352,24 @@ async function createScene(modelPath) {
   const model = await loader.loadAsync(modelPath);
   scene.add(model.scene);
 
-  const color = 0xffffff;
-  const intensity = 3;
-  const light = new THREE.DirectionalLight(color, intensity);
-  light.position.set(-1, 2, 4);
-  scene.add(light);
+  scene.background = new THREE.Color(0xd4e4ff);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+  dirLight.color.setHSL(0.1, 1, 0.95);
+  dirLight.position.set(-1, 1.75, 1);
+  dirLight.position.multiplyScalar(30);
+  scene.add(dirLight);
+
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2);
+  hemiLight.color.setHSL(0.6, 1, 0.6);
+  hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+  hemiLight.position.set(0, 50, 0);
+  scene.add(hemiLight);
 
   const size = 20;
   const divisions = 10;
-  const gridHelper = new THREE.GridHelper(size, divisions);
+  const gridHelper = new THREE.GridHelper(size, divisions, 0x0000ff, 0xb0b0b0);
+  gridHelper.position.y = -0.5;
   scene.add(gridHelper);
 
   const refs = {
