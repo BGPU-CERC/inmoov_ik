@@ -160,8 +160,8 @@ function createIKSolver(refs) {
   const links = {
     head: {
       index: indexOfLink(/head/i),
-      rotationMin: new THREE.Vector3(-0.5, -1.1, -0.5),
-      rotationMax: new THREE.Vector3(0.5, 1.1, 0.5),
+      rotationMin: new THREE.Vector3(-0.34, -0.78, -0.17),
+      rotationMax: new THREE.Vector3(0.34, 0.78, 0.17),
       rotationMap: {
         x: rotationMapOf("neck"),
         y: rotationMapOf("rothead", 1, 0),
@@ -297,6 +297,9 @@ function createIKSolver(refs) {
     q1.copy(refs.head.quaternion);
     refs.head.quaternion.slerpQuaternions(q0, q1, 0.1); // fixme: infinite slerp
 
+    refs.neck_plate_bottom.rotation.copy(refs.head.rotation);
+    refs.neck_plate_bottom.rotation.y = 0;
+
     clamp(
       refs.omoplate_l.rotation,
       links.omoplate_l.rotationMinThreshold,
@@ -394,6 +397,8 @@ async function createScene(modelPath) {
       refs.omoplate_l = n;
     } else if (n.isBone && n.name.match(/omoplate_r/i)) {
       refs.omoplate_r = n;
+    } else if (n.name.match(/neck_plate_bottom/i)) {
+      refs.neck_plate_bottom = n;
     } else if ((match = n.name.match(/^f_(\w+)_(\d)_(l|r)$/)) !== null) {
       const [phalanx, finger, phalanx_number, side] = match;
       const hand = refs.hands[side];
