@@ -1,4 +1,4 @@
-import { TARGET_L, TARGET_R } from "./index.js";
+import { TARGET_L, TARGET_R } from "./constants.js";
 import { keydown } from "./keyboard.js";
 import { wheel, dispatchTo as wheelDispatchTo } from "./mouse.js";
 
