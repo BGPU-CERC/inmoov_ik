@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { PI } from "./constants.js";
 import { debounce } from "./debounce.js";
 import { createIKSolver } from "./ik.js";
+import { createPointCloud, listenPointsStream } from "./point_cloud.js";
 
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
@@ -122,6 +123,23 @@ export async function init(sceneContainerSelector, modelPath) {
     handRelease(refs.hands.r, refs.target_r);
   }
 
+  // refs.target = refs.target_r;
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "t") touchClosestPoint();
+  });
+  function touchClosestPoint() {
+    const closest = refs.points.children[0];
+    closest.updateMatrixWorld(true);
+    closest.getWorldPosition(refs.target.position);
+
+    const parent = refs.target.parent;
+    scene.attach(refs.target);
+    closest.getWorldPosition(refs.target.position);
+    // parent.attach(refs.target);
+
+    // refs.target.position.copy(vertex);
+  }
+
   return {
     domElement: renderer.domElement,
 
@@ -140,6 +158,8 @@ export async function init(sceneContainerSelector, modelPath) {
 
     handGrabLeft,
     handGrabRight,
+
+    listenPointsStream: (url) => listenPointsStream(refs.points, url),
   };
 }
 
@@ -197,6 +217,11 @@ async function createScene(modelPath) {
       refs.omoplate_r = n;
     } else if (n.name.match(/neck_plate_bottom/i)) {
       refs.neck_plate_bottom = n;
+    } else if (n.name.match(/^orbbec$/i)) {
+      refs.orbbec = n;
+      refs.points = createPointCloud(25_000);
+      refs.points.visible = false;
+      refs.orbbec.add(refs.points);
     } else if ((match = n.name.match(/^f_(\w+)_(\d)_(l|r)$/)) !== null) {
       const [phalanx, finger, phalanx_number, side] = match;
       const hand = refs.hands[side];

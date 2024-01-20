@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {
-    CCDIKHelper,
-    CCDIKSolver,
+  CCDIKHelper,
+  CCDIKSolver,
 } from "three/addons/animation/CCDIKSolver.js";
 import { PI, mapLinear } from "./constants.js";
 
