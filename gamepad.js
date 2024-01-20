@@ -91,9 +91,6 @@ export function controlScene(scene) {
         case 0:
           scene.resetTargets();
           break;
-        case 3:
-          scene.toggleIdle();
-          break;
 
         case 6:
           scene.handGrabRight(button.value);

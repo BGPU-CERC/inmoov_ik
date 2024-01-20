@@ -2,15 +2,24 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { Gyroscope } from "three/addons/misc/Gyroscope.js";
 import { PI } from "./constants.js";
-import { debounce } from "./debounce.js";
+import { handGrabLeft, handGrabRight } from "./grab.js";
 import { createIKSolver } from "./ik.js";
+import "./injection.js";
+import {
+  createJoints,
+  createPointCloud,
+  listenPointsStream,
+} from "./point_cloud.js";
+import { init_pose_mirror, mirrorPose } from "./pose_mirror.js";
+import { refs } from "./refs.js";
 
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
-  const { scene, refs, resetTargets } = await createScene(modelPath);
-  const { camera, cameraControls } = createCamera(renderer);
-  const { ikHelper, updateIK, getRotationMap } = createIKSolver(refs);
+  const { scene, resetTargets } = await createScene(modelPath);
+  const { camera, cameraControls, cameraPosDefault } = createCamera(renderer);
+  const { ikHelper, updateIK, getRotationMap } = createIKSolver();
 
   [refs.target_l, refs.target_r].forEach((target) => {
     const args = [target, renderer, camera, cameraControls];
@@ -18,12 +27,6 @@ export async function init(sceneContainerSelector, modelPath) {
     controls.addEventListener("mouseDown", () => (refs.target = target));
     controls.addEventListener("objectChange", () => clamp(target));
     scene.add(controls);
-  });
-
-  renderer.setAnimationLoop(function animate() {
-    updateIK();
-    cameraControls.update();
-    renderer.render(scene, camera);
   });
 
   const sceneContainer = document.querySelector(sceneContainerSelector);
@@ -39,11 +42,45 @@ export async function init(sceneContainerSelector, modelPath) {
 
   resizeObserver.observe(sceneContainer);
 
-  renderer.setAnimationLoop(function animate() {
-    updateIK();
+  let animationFn = animateIk;
+  renderer.setAnimationLoop(animationFn);
+  window.removeEventListener("keydown", switchAnimationFn);
+  window.addEventListener("keydown", switchAnimationFn);
+  init_pose_mirror();
+
+  function switchAnimationFn(e) {
+    if (e.key !== "m") return;
+
+    let nextAnimationFn;
+    switch (animationFn) {
+      case animateIk:
+        nextAnimationFn = animateMirrorPose;
+        camera.position.set(1, 2, -1.5);
+        break;
+      default:
+        nextAnimationFn = animateIk;
+        camera.position.set(...cameraPosDefault);
+        break;
+    }
+
+    animationFn = nextAnimationFn;
+    renderer.setAnimationLoop(animationFn);
+  }
+
+  function animateBase() {
     cameraControls.update();
     renderer.render(scene, camera);
-  });
+  }
+
+  function animateIk() {
+    updateIK();
+    animateBase();
+  }
+
+  function animateMirrorPose() {
+    mirrorPose();
+    animateBase();
+  }
 
   const targetPosMin = new THREE.Vector3(-5, -2, -5);
   const targetPosMax = new THREE.Vector3(5, 5, 5);
@@ -75,53 +112,6 @@ export async function init(sceneContainerSelector, modelPath) {
     }
   }
 
-  function idleTick() {
-    const rand = () => (Math.random() - 0.5) / 2.5;
-    translateOnAxis(refs.target_l, rand(), rand(), rand(), rand());
-    translateOnAxis(refs.target_r, rand(), rand(), rand(), rand());
-    translateOnAxis(refs.target_head, rand(), rand(), rand(), rand());
-  }
-
-  let idleInterval = null;
-  let toggleIdle = debounce(() => {
-    if (idleInterval) {
-      clearInterval(idleInterval);
-      idleInterval = null;
-    } else {
-      idleInterval = setInterval(idleTick, 0.8 * 1000);
-    }
-  }, 0.5 * 1000);
-
-  function handGrab(hand, target, value) {
-    value = Number(value.toFixed(2));
-    for (const part in hand.parts) {
-      const finger = hand.parts[part];
-      finger.rotationValue = value;
-      for (const phalanx of finger) {
-        const { from, to, axis } = phalanx.rotationMap;
-        const rotation = mapLinear(value, 0, 1, from, to);
-        phalanx.rotation[axis] = rotation;
-      }
-    }
-    const target_scale = 1 - value / 3;
-    target.scale.set(target_scale, target_scale, target_scale);
-  }
-
-  let handRelease = debounce(
-    (hand, target) => handGrab(hand, target, 0),
-    0.1 * 1000
-  );
-
-  function handGrabLeft(value) {
-    handGrab(refs.hands.l, refs.target_l, value);
-    handRelease(refs.hands.l, refs.target_l);
-  }
-
-  function handGrabRight(value) {
-    handGrab(refs.hands.r, refs.target_r, value);
-    handRelease(refs.hands.r, refs.target_r);
-  }
-
   return {
     domElement: renderer.domElement,
 
@@ -132,27 +122,25 @@ export async function init(sceneContainerSelector, modelPath) {
     resetTargets,
     resetCamera: cameraControls.reset,
 
-    toggleIdle,
-
     target_head: refs.target_head,
     target_l: refs.target_l,
     target_r: refs.target_r,
 
     handGrabLeft,
     handGrabRight,
+
+    listenPointsStream,
   };
 }
 
 async function createScene(modelPath) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xcccccc);
+  scene.background = new THREE.Color(0xd4e4ff);
   scene.fog = new THREE.FogExp2(0xcccccc, 0.002);
 
   const loader = new GLTFLoader();
   const model = await loader.loadAsync(modelPath);
   scene.add(model.scene);
-
-  scene.background = new THREE.Color(0xd4e4ff);
 
   const dirLight = new THREE.DirectionalLight(0xffffff, 3);
   dirLight.color.setHSL(0.1, 1, 0.95);
@@ -172,13 +160,6 @@ async function createScene(modelPath) {
   gridHelper.position.y = -0.5;
   scene.add(gridHelper);
 
-  const refs = {
-    hands: {
-      l: { parts: {} },
-      r: { parts: {} },
-    },
-  };
-
   scene.traverse((n) => {
     let match;
 
@@ -197,6 +178,18 @@ async function createScene(modelPath) {
       refs.omoplate_r = n;
     } else if (n.name.match(/neck_plate_bottom/i)) {
       refs.neck_plate_bottom = n;
+    } else if (n.name.match(/^orbbec$/i)) {
+      refs.orbbec = n;
+
+      refs.gyro = new Gyroscope();
+      refs.orbbec.add(refs.gyro);
+
+      refs.points = createPointCloud(35_000);
+      refs.points.visible = false;
+      refs.gyro.add(refs.points);
+
+      refs.joints = createJoints();
+      refs.joints.forEach((joint) => refs.gyro.add(joint));
     } else if ((match = n.name.match(/^f_(\w+)_(\d)_(l|r)$/)) !== null) {
       const [phalanx, finger, phalanx_number, side] = match;
       const hand = refs.hands[side];
@@ -229,9 +222,9 @@ async function createScene(modelPath) {
   refs.target_head.position.set(0, 0.55, 1);
   refs.target = refs.target_head;
 
-  [refs.target_l, refs.target_r].forEach(
-    (target) => (target.rest = new THREE.Vector3().copy(target.position))
-  );
+  [refs.target_l, refs.target_r].forEach((target) => {
+    target.rest = new THREE.Vector3().copy(target.position);
+  });
 
   function resetTargets() {
     refs.target = refs.target_head;
@@ -240,13 +233,14 @@ async function createScene(modelPath) {
     );
   }
 
-  return { scene, refs, resetTargets };
+  return { scene, resetTargets };
 }
 
 function createCamera(renderer) {
   const aspect = window.innerWidth / window.innerHeight;
+  const cameraPosDefault = [0, 0.5, 1.3];
   const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-  camera.position.set(0, 0.5, 1.3);
+  camera.position.set(...cameraPosDefault);
 
   const cameraControls = new OrbitControls(camera, renderer.domElement);
   cameraControls.target.copy(new THREE.Vector3(0, 0.25, 0));
@@ -258,6 +252,7 @@ function createCamera(renderer) {
   cameraControls.zoomSpeed = zoomSpeed;
   const rotateSpeed = 5;
   cameraControls.rotateSpeed = rotateSpeed;
+  // todo: remove old event listeners on each init
   document.addEventListener("mousedown", () => {
     cameraControls.rotateSpeed = 1;
     cameraControls.zoomSpeed = 1;
@@ -267,7 +262,7 @@ function createCamera(renderer) {
     cameraControls.zoomSpeed = zoomSpeed;
   });
 
-  return { camera, cameraControls };
+  return { camera, cameraControls, cameraPosDefault };
 }
 
 function createTargetControls(target, renderer, camera, cameraControls) {

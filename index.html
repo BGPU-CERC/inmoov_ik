@@ -36,16 +36,18 @@
       const scene = await init("#inmoov_ik", "inmoov.glb");
       gamepad.controlScene(scene);
 
-      const gui = new GUI();
-      const rotationMap = scene.getRotationMap();
-      Object.keys(rotationMap).forEach((key) => {
-        gui.add(rotationMap, key).listen();
-      });
+      scene.listenPointsStream("ws://localhost:8080")
 
-      setInterval(
-        () => Object.assign(rotationMap, scene.getRotationMap()),
-        1000 / 3
-      );
+      // const gui = new GUI();
+      // const rotationMap = scene.getRotationMap();
+      // Object.keys(rotationMap).forEach((key) => {
+      //   gui.add(rotationMap, key).listen();
+      // });
+
+      // setInterval(
+      //   () => Object.assign(rotationMap, scene.getRotationMap()),
+      //   1000 / 3
+      // );
     </script>
   </body>
 </html>
