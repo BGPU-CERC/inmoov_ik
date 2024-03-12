@@ -42,7 +42,7 @@ export async function init(sceneContainerSelector, modelPath) {
 
   resizeObserver.observe(sceneContainer);
 
-  let animationFn = animateIk;
+  let animationFn = animateMirrorPose;
   renderer.setAnimationLoop(animationFn);
   window.removeEventListener("keydown", switchAnimationFn);
   window.addEventListener("keydown", switchAnimationFn);
@@ -70,6 +70,10 @@ export async function init(sceneContainerSelector, modelPath) {
   function animateBase() {
     cameraControls.update();
     renderer.render(scene, camera);
+    const targetWorldPos = new THREE.Vector3();
+    refs.target.getWorldPosition(targetWorldPos);
+    refs.eye_l.lookAt(targetWorldPos);
+    refs.eye_r.lookAt(targetWorldPos);
   }
 
   function animateIk() {
@@ -172,6 +176,11 @@ async function createScene(modelPath) {
       refs.target_r = n;
     } else if (n.isBone && n.name.match(/head/i)) {
       refs.head = n;
+    } else if (n.isBone && n.name.match(/eye_l/i)) {
+      refs.eye_l = n;
+      // debugger;
+    } else if (n.isBone && n.name.match(/eye_r/i)) {
+      refs.eye_r = n;
     } else if (n.isBone && n.name.match(/omoplate_l/i)) {
       refs.omoplate_l = n;
     } else if (n.isBone && n.name.match(/omoplate_r/i)) {
@@ -238,7 +247,7 @@ async function createScene(modelPath) {
 
 function createCamera(renderer) {
   const aspect = window.innerWidth / window.innerHeight;
-  const cameraPosDefault = [0, 0.5, 1.3];
+  const cameraPosDefault = [0, 0.75, 2.25];
   const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
   camera.position.set(...cameraPosDefault);
 
