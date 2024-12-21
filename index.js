@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { PI } from "./constants.js";
+import { PI, TARGET_L, TARGET_R } from "./constants.js";
 import { debounce } from "./debounce.js";
 import { createIKSolver } from "./ik.js";
 
