@@ -124,13 +124,17 @@ export async function init(sceneContainerSelector, modelPath) {
 
   return {
     domElement: renderer.domElement,
+    renderer,
 
     getRotationMap,
     translateOnAxis,
     translateTargetOnAxis,
     setTarget,
     resetTargets,
+
     resetCamera: cameraControls.reset,
+    cameraControls,
+    camera,
 
     toggleIdle,
 
