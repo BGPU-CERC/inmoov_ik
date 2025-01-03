@@ -17,13 +17,7 @@ export async function init(sceneContainerSelector, modelPath) {
     const controls = createTargetControls(...args);
     controls.addEventListener("mouseDown", () => (refs.target = target));
     controls.addEventListener("objectChange", () => clamp(target));
-    scene.add(controls);
-  });
-
-  renderer.setAnimationLoop(function animate() {
-    updateIK();
-    cameraControls.update();
-    renderer.render(scene, camera);
+    scene.add(controls.getHelper());
   });
 
   const sceneContainer = document.querySelector(sceneContainerSelector);
@@ -41,7 +35,6 @@ export async function init(sceneContainerSelector, modelPath) {
 
   renderer.setAnimationLoop(function animate() {
     updateIK();
-    cameraControls.update();
     renderer.render(scene, camera);
   });
 
@@ -262,11 +255,11 @@ function createCamera(renderer) {
   cameraControls.zoomSpeed = zoomSpeed;
   const rotateSpeed = 5;
   cameraControls.rotateSpeed = rotateSpeed;
-  document.addEventListener("mousedown", () => {
+  document.addEventListener("pointerdown", () => {
     cameraControls.rotateSpeed = 1;
     cameraControls.zoomSpeed = 1;
   });
-  document.addEventListener("mouseup", () => {
+  document.addEventListener("pointerup", () => {
     cameraControls.rotateSpeed = rotateSpeed;
     cameraControls.zoomSpeed = zoomSpeed;
   });
