@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {
-    CCDIKHelper,
-    CCDIKSolver,
+  CCDIKHelper,
+  CCDIKSolver,
 } from "three/addons/animation/CCDIKSolver.js";
 import { PI, mapLinear } from "./constants.js";
 
@@ -134,6 +134,8 @@ export function createIKSolver(refs) {
 
   const target = new THREE.Vector3();
   const v0 = new THREE.Vector3();
+  const v1 = new THREE.Vector3();
+  const v2 = new THREE.Vector3();
   const q0 = new THREE.Quaternion();
   const q1 = new THREE.Quaternion();
 
@@ -142,7 +144,51 @@ export function createIKSolver(refs) {
   }
 
   function updateIK() {
-    ikSolver.update();
+    [
+      [refs.target_l.position, refs.target_r.position, 1, v1],
+      [refs.target_r.position, refs.target_l.position, -1, v2],
+    ].forEach(([target_pos, other_target_pos, d, prev_pos], i) => {
+      if (!prev_pos.equals(target_pos)) {
+        if (d * target_pos.x < 0) {
+          target_pos.z = Math.max(1.5, target_pos.z);
+        }
+
+        if (target_pos.z < 0) {
+          target_pos.x = d * Math.max(1.5, d * target_pos.x);
+          target_pos.y = Math.min(1.5, target_pos.y);
+          other_target_pos.z = -1 * (target_pos.z - 0.5);
+        }
+
+        if (i === 0) {
+          other_target_pos.x = Math.min(other_target_pos.x, target_pos.x - 1.8);
+        } else {
+          other_target_pos.x = Math.max(other_target_pos.x, target_pos.x + 1.8);
+        }
+
+        clampToCylynder(target_pos, d);
+        clampToCylynder(other_target_pos, d * -1);
+      }
+
+      function clampToCylynder(vec3, d) {
+        v0.copy(vec3).setY(0).clampLength(1.5, 3);
+        vec3.setX(v0.x).setZ(v0.z);
+        vec3.setY(THREE.MathUtils.clamp(vec3.y, 0, 3));
+
+        if (d * vec3.x < 0) {
+          vec3.z = Math.max(1.5, vec3.z);
+        }
+      }
+    });
+
+    if (
+      !refs.target_l.position.equals(v1) ||
+      !refs.target_r.position.equals(v2)
+    ) {
+      ikSolver.update();
+    }
+
+    v1.copy(refs.target_l.position);
+    v2.copy(refs.target_r.position);
 
     q0.copy(refs.head.quaternion);
     refs.target.getWorldPosition(target);

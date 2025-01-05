@@ -16,7 +16,6 @@ export async function init(sceneContainerSelector, modelPath) {
     const args = [target, renderer, camera, cameraControls];
     const controls = createTargetControls(...args);
     controls.addEventListener("mouseDown", () => (refs.target = target));
-    controls.addEventListener("objectChange", () => clamp(target));
     scene.add(controls.getHelper());
   });
 
@@ -38,17 +37,10 @@ export async function init(sceneContainerSelector, modelPath) {
     renderer.render(scene, camera);
   });
 
-  const targetPosMin = new THREE.Vector3(-5, -2, -5);
-  const targetPosMax = new THREE.Vector3(5, 5, 5);
-  function clamp(object) {
-    object.position.clamp(targetPosMin, targetPosMax);
-  }
-
   const translateAxis = new THREE.Vector3();
   function translateOnAxis(object, x, y, z, distance) {
     translateAxis.set(z, y, x);
     object.translateOnAxis(translateAxis, distance);
-    clamp(object);
   }
 
   function translateTargetOnAxis(x, y, z, distance) {
