@@ -100,10 +100,12 @@ export function createIKSolver(refs) {
     },
   };
 
+  const iteration = 1;
   const iks = [
     {
       target: indexOfLink(/target_l/i),
       effector: indexOfLink(/hand_effector_l/i),
+      iteration,
       links: [
         links.hand_l,
         links.forearm_l,
@@ -117,6 +119,7 @@ export function createIKSolver(refs) {
     {
       target: indexOfLink(/target_r/i),
       effector: indexOfLink(/hand_effector_r/i),
+      iteration,
       links: [
         links.hand_r,
         links.forearm_r,
@@ -153,7 +156,7 @@ export function createIKSolver(refs) {
           target_pos.z = Math.max(1.5, target_pos.z);
         }
 
-        if (target_pos.z < 0) {
+        if (target_pos.z < 0.5) {
           target_pos.x = d * Math.max(1.5, d * target_pos.x);
           target_pos.y = Math.min(1.5, target_pos.y);
           other_target_pos.z = -1 * (target_pos.z - 0.5);
