@@ -108,6 +108,7 @@ export async function init(sceneContainerSelector, modelPath) {
   }
 
   async function resetTargets() {
+    cameraControls.reset();
     refs.target = refs.target_head;
     [refs.target_l, refs.target_r].forEach((target) => {
       target.position.copy(target.rest);
