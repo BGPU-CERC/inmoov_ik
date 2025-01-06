@@ -8,9 +8,9 @@ import { createIKSolver } from "./ik.js";
 
 export async function init(sceneContainerSelector, modelPath) {
   const renderer = createRenderer();
-  const { scene, refs, resetTargets } = await createScene(modelPath);
+  const { scene, refs } = await createScene(modelPath);
   const { camera, cameraControls } = createCamera(renderer);
-  const { ikHelper, updateIK, getRotationMap } = createIKSolver(refs);
+  const { updateIK, getRotationMap } = createIKSolver(refs);
 
   [refs.target_l, refs.target_r].forEach((target) => {
     const args = [target, renderer, camera, cameraControls];
@@ -105,6 +105,17 @@ export async function init(sceneContainerSelector, modelPath) {
   function handGrabRight(value) {
     handGrab(refs.hands.r, refs.target_r, value);
     handRelease(refs.hands.r, refs.target_r);
+  }
+
+  async function resetTargets() {
+    refs.target = refs.target_head;
+    [refs.target_l, refs.target_r].forEach((target) => {
+      target.position.copy(target.rest);
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    refs.inmoov.skeleton.bones.forEach((bone) => {
+      bone.rotation.copy(bone.userData.rotation_default);
+    });
   }
 
   return {
@@ -214,6 +225,11 @@ async function createScene(modelPath) {
     }
   });
 
+  refs.inmoov.skeleton.bones.forEach((bone) => {
+    if (bone.name.match("forearm")) bone.rotation.x = 0.4;
+    bone.userData.rotation_default = bone.rotation.clone();
+  });
+
   refs.target_head = new THREE.Object3D();
   refs.target_head.position.set(0, 0.55, 1);
   refs.target = refs.target_head;
@@ -222,14 +238,7 @@ async function createScene(modelPath) {
     (target) => (target.rest = new THREE.Vector3().copy(target.position))
   );
 
-  function resetTargets() {
-    refs.target = refs.target_head;
-    [refs.target_l, refs.target_r].forEach((target) =>
-      target.position.copy(target.rest)
-    );
-  }
-
-  return { scene, refs, resetTargets };
+  return { scene, refs };
 }
 
 function createCamera(renderer) {

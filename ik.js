@@ -137,8 +137,8 @@ export function createIKSolver(refs) {
 
   const target = new THREE.Vector3();
   const v0 = new THREE.Vector3();
-  const v1 = new THREE.Vector3();
-  const v2 = new THREE.Vector3();
+  const v1 = refs.target_l.position.clone();
+  const v2 = refs.target_r.position.clone();
   const q0 = new THREE.Quaternion();
   const q1 = new THREE.Quaternion();
 
