@@ -1,6 +1,6 @@
 {
   "name": "inmoov_ik",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "Inverse Kinematics for Inmoov robot",
   "main": "index.js",
   "license": "ISC",
