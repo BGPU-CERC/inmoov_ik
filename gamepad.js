@@ -31,7 +31,7 @@ export const buttonMap = [
 export function mapToKeyboard(keyboardMap) {
   const gamepadMap = keyboardMap.reduce(
     (map, [gamepadButton, keyboardCode]) => {
-      const indexOfGamepadButton = buttonMap.indexOf((buttonNames) =>
+      const indexOfGamepadButton = buttonMap.findIndex((buttonNames) =>
         buttonNames.includes(gamepadButton)
       );
 

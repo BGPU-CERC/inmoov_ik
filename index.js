@@ -60,23 +60,6 @@ export async function init(sceneContainerSelector, modelPath) {
     }
   }
 
-  function idleTick() {
-    const rand = () => (Math.random() - 0.5) / 2.5;
-    translateOnAxis(refs.target_l, rand(), rand(), rand(), rand());
-    translateOnAxis(refs.target_r, rand(), rand(), rand(), rand());
-    translateOnAxis(refs.target_head, rand(), rand(), rand(), rand());
-  }
-
-  let idleInterval = null;
-  let toggleIdle = debounce(() => {
-    if (idleInterval) {
-      clearInterval(idleInterval);
-      idleInterval = null;
-    } else {
-      idleInterval = setInterval(idleTick, 0.8 * 1000);
-    }
-  }, 0.5 * 1000);
-
   function handGrab(hand, target, value) {
     value = Number(value.toFixed(2));
     for (const part in hand.parts) {
@@ -132,8 +115,6 @@ export async function init(sceneContainerSelector, modelPath) {
     resetCamera: cameraControls.reset,
     cameraControls,
     camera,
-
-    toggleIdle,
 
     target_head: refs.target_head,
     target_l: refs.target_l,
