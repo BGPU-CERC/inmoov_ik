@@ -70,7 +70,11 @@ export function mapToKeyboard(keyboardMap) {
   };
 
   animationFrameRequest || loop();
-  const stop = () => (onKeyboardMapLoop = undefined);
+  const stop = () => {
+    animationFrameRequest = undefined;
+    onKeyboardMapLoop = undefined;
+  };
+  
   return stop;
 }
 
@@ -157,6 +161,7 @@ export function controlScene(scene) {
 
   animationFrameRequest || loop();
   const stop = () => {
+    animationFrameRequest = undefined;
     onControlLoop = undefined;
     inUse = false;
   };
