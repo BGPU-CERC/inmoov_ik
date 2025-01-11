@@ -150,7 +150,7 @@ export function controlScene(scene) {
       }
     }
 
-    if (inUse !== inUsePrev) onUseChange?.();
+    if (inUse !== inUsePrev) onUseChange?.(inUse);
     inUsePrev = inUse;
   };
 
