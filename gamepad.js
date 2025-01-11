@@ -154,7 +154,11 @@ export function controlScene(scene) {
     inUsePrev = inUse;
   };
 
-  const stop = () => (onControlLoop = undefined);
+  const stop = () => {
+    onControlLoop = undefined;
+    inUse = false;
+  };
+
   return stop;
 }
 
