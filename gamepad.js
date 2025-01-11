@@ -7,6 +7,10 @@ let onKeyboardMapLoop = undefined;
 let animationFrameRequest = null;
 const hasGamepadAPI = () => "getGamepads" in navigator;
 
+let inUse = false;
+let inUsePrev = false;
+let onUseChange = undefined;
+
 // [xbox, ps]
 export const buttonMap = [
   ["A", "Cross"],
@@ -27,6 +31,10 @@ export const buttonMap = [
   ["Right", "Right"],
   ["Logo", "Logo"],
 ];
+
+export function onUse(cb) {
+  onUseChange = cb;
+}
 
 export function mapToKeyboard(keyboardMap) {
   const gamepadMap = keyboardMap.reduce(
@@ -69,7 +77,12 @@ export function controlScene(scene) {
 
   wheelDispatchTo(scene.domElement);
 
+  let x1Prev = 0;
+  let y1Prev = 0;
+  let x2Prev = 0;
+  let y2Prev = 0;
   onControlLoop = (gamepad) => {
+    inUse = false;
     const x1 = threshold(gamepad.axes[0]);
     const y1 = threshold(gamepad.axes[1]);
     const x2 = threshold(gamepad.axes[2]);
@@ -77,9 +90,16 @@ export function controlScene(scene) {
     scene.translateTargetOnAxis(0, -y2, x2, 0.025);
     scene.translateTargetOnAxis(y1, 0, x1, 0.025);
 
+    inUse = x1 !== x1Prev || y1 !== y1Prev || x2 !== x2Prev || y2 !== y2Prev;
+    x1Prev = x1;
+    y1Prev = y1;
+    x2Prev = x2;
+    y2Prev = y2;
+
     for (let i = 0; i < gamepad.buttons.length; i++) {
       const button = gamepad.buttons[i];
       if (!button.pressed) continue;
+      inUse = true;
 
       switch (i) {
         case 10:
@@ -126,6 +146,9 @@ export function controlScene(scene) {
           console.log(`Button pressed: ${i}`);
       }
     }
+
+    if (inUse !== inUsePrev) onUseChange?.();
+    inUsePrev = inUse;
   };
 }
 
