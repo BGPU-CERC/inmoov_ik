@@ -1,15 +1,16 @@
 import { TARGET_L, TARGET_R } from "./constants.js";
-import { keydown } from "./keyboard.js";
+import { keydown, keyup } from "./keyboard.js";
 import { wheel, dispatchTo as wheelDispatchTo } from "./mouse.js";
 
-let onloop = undefined;
+let onControlLoop = undefined;
+let onKeyboardMapLoop = undefined;
 let animationFrameRequest = null;
 const hasGamepadAPI = () => "getGamepads" in navigator;
 
 // [xbox, ps]
 export const buttonMap = [
-  ["A", "X"],
-  ["B", "O"],
+  ["A", "Cross"],
+  ["B", "Circle"],
   ["X", "Square"],
   ["Y", "Triangle"],
   ["LB", "L1"],
@@ -27,6 +28,40 @@ export const buttonMap = [
   ["Logo", "Logo"],
 ];
 
+export function mapToKeyboard(keyboardMap) {
+  const gamepadMap = keyboardMap.reduce(
+    (map, [gamepadButton, keyboardCode]) => {
+      const indexOfGamepadButton = buttonMap.indexOf((buttonNames) =>
+        buttonNames.includes(gamepadButton)
+      );
+
+      map[indexOfGamepadButton] = {
+        keyboardCode,
+        pressed: false,
+      };
+
+      return map;
+    },
+    {}
+  );
+
+  onKeyboardMapLoop = (gamepad) => {
+    for (let i = 0; i < gamepad.buttons.length; i++) {
+      const mapped = gamepadMap[i];
+      if (!mapped) continue;
+
+      const button = gamepad.buttons[i];
+      if (button.pressed) {
+        mapped.pressed || keydown(mapped.keyboardCode);
+      } else {
+        !mapped.pressed || keyup(mapped.keyboardCode);
+      }
+
+      mapped.pressed = Boolean(button.pressed);
+    }
+  };
+}
+
 export function controlScene(scene) {
   if (!hasGamepadAPI()) {
     return console.warn("Gamepad API not supported");
@@ -34,7 +69,7 @@ export function controlScene(scene) {
 
   wheelDispatchTo(scene.domElement);
 
-  onloop = (gamepad) => {
+  onControlLoop = (gamepad) => {
     const x1 = threshold(gamepad.axes[0]);
     const y1 = threshold(gamepad.axes[1]);
     const x2 = threshold(gamepad.axes[2]);
@@ -79,9 +114,6 @@ export function controlScene(scene) {
         case 0:
           scene.resetTargets();
           break;
-        case 3:
-          scene.toggleIdle();
-          break;
 
         case 6:
           scene.handGrabRight(button.value);
@@ -98,12 +130,13 @@ export function controlScene(scene) {
 }
 
 function loop() {
-  if (!onloop) return;
+  if (!onControlLoop || !onKeyboardMapLoop) return;
 
   const gamepads = navigator.getGamepads();
   const gamepad = gamepads.find(Boolean);
 
-  onloop(gamepad);
+  onControlLoop?.(gamepad);
+  onKeyboardMapLoop?.(gamepad);
 
   animationFrameRequest = requestAnimationFrame(loop);
 }
