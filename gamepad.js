@@ -68,6 +68,9 @@ export function mapToKeyboard(keyboardMap) {
       mapped.pressed = Boolean(button.pressed);
     }
   };
+
+  const stop = () => (onKeyboardMapLoop = undefined);
+  return stop;
 }
 
 export function controlScene(scene) {
@@ -150,6 +153,9 @@ export function controlScene(scene) {
     if (inUse !== inUsePrev) onUseChange?.();
     inUsePrev = inUse;
   };
+
+  const stop = () => (onControlLoop = undefined);
+  return stop;
 }
 
 function loop() {
