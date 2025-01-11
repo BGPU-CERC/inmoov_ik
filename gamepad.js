@@ -4,46 +4,34 @@ import { wheel, dispatchTo as wheelDispatchTo } from "./mouse.js";
 
 let onloop = undefined;
 let animationFrameRequest = null;
+const hasGamepadAPI = () => "getGamepads" in navigator;
 
-window.addEventListener("gamepadconnected", (e) => {
-  console.log(
-    "Gamepad connected at index %d: %s. %d buttons, %d axes.",
-    e.gamepad.index,
-    e.gamepad.id,
-    e.gamepad.buttons.length,
-    e.gamepad.axes.length
-  );
-
-  animationFrameRequest || loop();
-});
-
-window.addEventListener("gamepaddisconnected", (e) => {
-  console.log(
-    "Gamepad disconnected from index %d: %s",
-    e.gamepad.index,
-    e.gamepad.id
-  );
-
-  cancelAnimationFrame(animationFrameRequest);
-  animationFrameRequest = null;
-});
-
-function loop() {
-  if (!onloop) return;
-
-  const gamepads = navigator.getGamepads();
-  const gamepad = gamepads.find(Boolean);
-
-  onloop(gamepad);
-
-  animationFrameRequest = requestAnimationFrame(loop);
-}
-
-function threshold(axis) {
-  return Math.abs(axis) >= 0.06 ? axis : 0;
-}
+// [xbox, ps]
+export const buttonMap = [
+  ["A", "X"],
+  ["B", "O"],
+  ["X", "Square"],
+  ["Y", "Triangle"],
+  ["LB", "L1"],
+  ["RB", "R1"],
+  ["LT", "L2"],
+  ["RT", "R2"],
+  ["Addr Bar", "Share"],
+  ["Menu", "Options"],
+  ["LSB", "LSB"],
+  ["RSB", "RSB"],
+  ["Up", "Up"],
+  ["Down", "Down"],
+  ["Left", "Left"],
+  ["Right", "Right"],
+  ["Logo", "Logo"],
+];
 
 export function controlScene(scene) {
+  if (!hasGamepadAPI()) {
+    return console.warn("Gamepad API not supported");
+  }
+
   wheelDispatchTo(scene.domElement);
 
   onloop = (gamepad) => {
@@ -108,3 +96,41 @@ export function controlScene(scene) {
     }
   };
 }
+
+function loop() {
+  if (!onloop) return;
+
+  const gamepads = navigator.getGamepads();
+  const gamepad = gamepads.find(Boolean);
+
+  onloop(gamepad);
+
+  animationFrameRequest = requestAnimationFrame(loop);
+}
+
+function threshold(axis) {
+  return Math.abs(axis) >= 0.06 ? axis : 0;
+}
+
+window.addEventListener("gamepadconnected", (e) => {
+  console.log(
+    "Gamepad connected at index %d: %s. %d buttons, %d axes.",
+    e.gamepad.index,
+    e.gamepad.id,
+    e.gamepad.buttons.length,
+    e.gamepad.axes.length
+  );
+
+  animationFrameRequest || loop();
+});
+
+window.addEventListener("gamepaddisconnected", (e) => {
+  console.log(
+    "Gamepad disconnected from index %d: %s",
+    e.gamepad.index,
+    e.gamepad.id
+  );
+
+  cancelAnimationFrame(animationFrameRequest);
+  animationFrameRequest = null;
+});
