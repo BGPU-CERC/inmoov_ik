@@ -236,9 +236,8 @@ export function createIKSolver(refs) {
 
     for (const side in refs.hands) {
       const hand = refs.hands[side];
-      for (const part_name in hand.parts) {
-        const part = hand.parts[part_name];
-        rotationMap[part_name] = part.rotationValue;
+      for (const finger of hand.fingers) {
+        rotationMap[finger.fullname] = finger.rotationValue;
       }
     }
 

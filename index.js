@@ -60,16 +60,20 @@ export async function init(sceneContainerSelector, modelPath) {
     }
   }
 
+  function fingerGrab(hand, fingerIndex, value) {
+    const finger = hand.fingers[fingerIndex];
+    finger.rotationValue = value;
+    for (const phalanx of finger) {
+      const { from, to, axis } = phalanx.rotationMap;
+      const rotation = mapLinear(value, 0, 1, from, to);
+      phalanx.rotation[axis] = rotation;
+    }
+  }
+
   function handGrab(hand, target, value) {
     value = Number(value.toFixed(2));
-    for (const part in hand.parts) {
-      const finger = hand.parts[part];
-      finger.rotationValue = value;
-      for (const phalanx of finger) {
-        const { from, to, axis } = phalanx.rotationMap;
-        const rotation = mapLinear(value, 0, 1, from, to);
-        phalanx.rotation[axis] = rotation;
-      }
+    for (let i = 0; i < hand.fingers.length; i++) {
+      fingerGrab(hand, i, value);
     }
     const target_scale = 1 - value / 3;
     target.scale.set(target_scale, target_scale, target_scale);
@@ -105,6 +109,7 @@ export async function init(sceneContainerSelector, modelPath) {
   return {
     domElement: renderer.domElement,
     renderer,
+    refs,
 
     getRotationMap,
     translateOnAxis,
@@ -120,6 +125,7 @@ export async function init(sceneContainerSelector, modelPath) {
     target_l: refs.target_l,
     target_r: refs.target_r,
 
+    fingerGrab,
     handGrabLeft,
     handGrabRight,
   };
@@ -156,8 +162,8 @@ async function createScene(modelPath) {
 
   const refs = {
     hands: {
-      l: { parts: {} },
-      r: { parts: {} },
+      l: { fingers: [] },
+      r: { fingers: [] },
     },
   };
 
@@ -180,26 +186,33 @@ async function createScene(modelPath) {
     } else if (n.name.match(/neck_plate_bottom/i)) {
       refs.neck_plate_bottom = n;
     } else if ((match = n.name.match(/^f_(\w+)_(\d)_(l|r)$/)) !== null) {
-      const [phalanx, finger, phalanx_number, side] = match;
+      const [phalanx, fingerName, phalanx_number, side] = match;
+      const fingerNames = ["thumb", "index", "middle", "ring", "pinky"];
+      const fingerIndex = fingerNames.indexOf(fingerName);
       const hand = refs.hands[side];
-      const part = `${finger}_${side}`;
-      hand.parts[part] =
-        hand.parts[part] || Object.assign([], { rotationValue: 0 });
-      hand.parts[part][phalanx_number] = n;
-      hand.parts[part][phalanx_number].rotationMap = {
+
+      hand.fingers[fingerIndex] =
+        hand.fingers[fingerIndex] ||
+        Object.assign([], {
+          rotationValue: 0,
+          fullname: fingerName + "_" + side,
+        });
+
+      hand.fingers[fingerIndex][phalanx_number] = n;
+      hand.fingers[fingerIndex][phalanx_number].rotationMap = {
         axis: "x",
         from: 0,
         to: -PI / 2,
       };
 
       if (n.name.match(/thumb_0/)) {
-        Object.assign(hand.parts[part][phalanx_number].rotationMap, {
+        Object.assign(hand.fingers[fingerIndex][phalanx_number].rotationMap, {
           axis: "y",
           from: PI / 4,
           to: -PI / 12,
         });
       } else if (n.name.match(/thumb_1/)) {
-        Object.assign(hand.parts[part][phalanx_number].rotationMap, {
+        Object.assign(hand.fingers[fingerIndex][phalanx_number].rotationMap, {
           from: 0,
           to: PI / 2,
         });
