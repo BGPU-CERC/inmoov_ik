@@ -222,6 +222,8 @@ async function createScene(modelPath) {
 
   refs.inmoov.skeleton.bones.forEach((bone) => {
     if (bone.name.match("forearm")) bone.rotation.x = 0.4;
+    else if (bone.name.match("hand_r")) bone.rotation.y = -1;
+    else if (bone.name.match("hand_l")) bone.rotation.y = 1;
     bone.userData.rotation_default = bone.rotation.clone();
   });
 
